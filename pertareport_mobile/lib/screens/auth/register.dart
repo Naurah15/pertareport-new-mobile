@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:pertareport_mobile/screens/auth/login.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
 
@@ -15,6 +16,7 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>(); // Form key untuk validasi
   final _usernameController = TextEditingController();
+  final _emailController = TextEditingController(); // Added email controller
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _phoneNumberController = TextEditingController();
@@ -31,7 +33,8 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
   // Pertamina Corporate Colors - matching first page
   static const Color pertaminaBlue = Color(0xFF0E4A6B);
   static const Color pertaminaGreen = Color(0xFF1B5E20);
-  static const Color pertaminaRed = Color(0xFFD32F2F);
+  static const Color pertaminaRed = Color(0xFFD32F2F);  
+  static const Color pertaminaOrange = Color(0xFFFF7043); // Added orange for email field
   static const Color lightBlue = Color(0xFF1565C0);
   static const Color backgroundGray = Color(0xFFF5F7FA);
   static const Color softBlue = Color(0xFFE8EDF5);
@@ -77,6 +80,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     _floatingController.dispose();
     _fadeController.dispose();
     _usernameController.dispose();
+    _emailController.dispose(); // Added email controller disposal
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _phoneNumberController.dispose();
@@ -87,6 +91,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
   void _resetForm() {
     _formKey.currentState?.reset(); // Reset validasi form
     _usernameController.clear();
+    _emailController.clear(); // Added email controller reset
     _passwordController.clear();
     _confirmPasswordController.clear();
     _phoneNumberController.clear();
@@ -95,6 +100,31 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       _obscurePassword = true;
       _obscureConfirmPassword = true;
     });
+  }
+
+  // Email validation method
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    
+    // Check if email contains @
+    if (!value.contains('@')) {
+      return 'Email must contain @';
+    }
+    
+    // Check if email ends with .com
+    if (!value.endsWith('.com')) {
+      return 'Email must end with .com';
+    }
+    
+    // Basic email format validation
+    final emailRegExp = RegExp(r'^[^@]+@[^@]+\.com$');
+    if (!emailRegExp.hasMatch(value)) {
+      return 'Please enter a valid email format';
+    }
+    
+    return null;
   }
 
   @override
@@ -385,6 +415,17 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                                 
                                 const SizedBox(height: 20),
                                 
+                                // Email Field - NEW
+                                _buildTextField(
+                                  controller: _emailController,
+                                  label: 'Email',
+                                  icon: Icons.email_outlined,
+                                  color: pertaminaOrange,
+                                  validator: _validateEmail,
+                                ),
+                                
+                                const SizedBox(height: 20),
+                                
                                 // Password Fields Row
                                 Row(
                                   children: [
@@ -588,6 +629,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                                           "http://127.0.0.1:8000/auth/register/",
                                           jsonEncode({
                                             "username": _usernameController.text,
+                                            "email": _emailController.text, // Added email to request
                                             "password1": _passwordController.text,
                                             "password2": _confirmPasswordController.text,
                                             "phone_number": _phoneNumberController.text,
@@ -710,15 +752,15 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                                       ),
                                       GestureDetector(
                                         onTap: () {
-                                          widget.controller.animateToPage(0,
-                                              duration: const Duration(milliseconds: 500),
-                                              curve: Curves.ease);
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => LoginPage(controller: PageController()),
+                                            ),
+                                          );
                                         },
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(8),
                                           ),
@@ -733,7 +775,8 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                                             ),
                                           ),
                                         ),
-                                      ),
+                                      )
+
                                     ],
                                   ),
                                 ),
@@ -807,6 +850,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
         controller: controller,
         obscureText: isPassword ? (obscureText ?? false) : false,
         validator: validator, // Tambah validator
+        keyboardType: label == 'Email' ? TextInputType.emailAddress : TextInputType.text, // Added email keyboard type
         style: TextStyle(
           color: textPrimary,
           fontSize: 14,
@@ -919,5 +963,4 @@ class GeometricPatternPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
+  bool shouldRepaint(CustomPainter oldDelegate) => false;}
