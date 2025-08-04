@@ -13,6 +13,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>(); // Form key untuk validasi
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -84,6 +85,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
 
   // Method untuk me-reset form
   void _resetForm() {
+    _formKey.currentState?.reset(); // Reset validasi form
     _usernameController.clear();
     _passwordController.clear();
     _confirmPasswordController.clear();
@@ -180,531 +182,595 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
                 child: SingleChildScrollView(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 20),
-                        
-                        // Header with back button and logo
-                        Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: pertaminaBlue.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    spreadRadius: 0,
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                icon: Icon(
-                                  Icons.arrow_back_ios_rounded,
-                                  color: pertaminaBlue,
-                                  size: 20,
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ),
-                            const Spacer(),
-                            // Mini Pertamina branding
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(15),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: pertaminaBlue.withOpacity(0.08),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [pertaminaBlue, pertaminaGreen],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: const Icon(
-                                      Icons.local_gas_station_rounded,
-                                      color: Colors.white,
-                                      size: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'PERTAMINA',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: pertaminaBlue,
-                                      letterSpacing: 1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 30),
-                        
-                        // Animated floating logo container
-                        AnimatedBuilder(
-                          animation: _floatingAnimation,
-                          builder: (context, child) {
-                            return Transform.translate(
-                              offset: Offset(0, _floatingAnimation.value * 0.5),
-                              child: Container(
-                                padding: const EdgeInsets.all(20),
+                    child: Form( // Wrap dengan Form widget
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 20),
+                          
+                          // Header with back button and logo
+                          Row(
+                            children: [
+                              Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(25),
+                                  borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: pertaminaBlue.withOpacity(0.12),
-                                      blurRadius: 30,
-                                      offset: const Offset(0, 15),
-                                      spreadRadius: -5,
-                                    ),
-                                    BoxShadow(
-                                      color: Colors.white.withOpacity(0.9),
-                                      blurRadius: 0,
-                                      offset: const Offset(0, -1),
+                                      color: pertaminaBlue.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      spreadRadius: 0,
                                     ),
                                   ],
-                                  border: Border.all(
-                                    color: pertaminaBlue.withOpacity(0.1),
-                                    width: 1,
-                                  ),
                                 ),
-                                child: Column(
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.arrow_back_ios_rounded,
+                                    color: pertaminaBlue,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                              const Spacer(),
+                              // Mini Pertamina branding
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: pertaminaBlue.withOpacity(0.08),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(16),
+                                      width: 20,
+                                      height: 20,
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
-                                          colors: [
-                                            pertaminaBlue,
-                                            pertaminaGreen,
-                                            pertaminaRed,
-                                          ],
+                                          colors: [pertaminaBlue, pertaminaGreen],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         ),
-                                        borderRadius: BorderRadius.circular(15),
+                                        borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Icon(
-                                        Icons.person_add_rounded,
-                                        size: 40,
+                                        Icons.local_gas_station_rounded,
                                         color: Colors.white,
+                                        size: 12,
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'Create Account',
+                                      'PERTAMINA',
                                       style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w800,
-                                        color: textPrimary,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Join the Enterprise Platform',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: textSecondary,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: pertaminaBlue,
+                                        letterSpacing: 1,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                        
-                        const SizedBox(height: 35),
-                        
-                        // Registration Form Card
-                        Container(
-                          padding: const EdgeInsets.all(28),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(25),
-                            boxShadow: [
-                              BoxShadow(
-                                color: pertaminaBlue.withOpacity(0.12),
-                                blurRadius: 30,
-                                offset: const Offset(0, 15),
-                                spreadRadius: -5,
                               ),
                             ],
-                            border: Border.all(
-                              color: pertaminaBlue.withOpacity(0.1),
-                              width: 1,
-                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Username Field
-                              _buildTextField(
-                                controller: _usernameController,
-                                label: 'Username',
-                                icon: Icons.person_outline_rounded,
-                                color: pertaminaBlue,
-                              ),
-                              
-                              const SizedBox(height: 20),
-                              
-                              // Password Fields Row
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _passwordController,
-                                      label: 'Password',
-                                      icon: Icons.lock_outline_rounded,
-                                      color: pertaminaGreen,
-                                      isPassword: true,
-                                      obscureText: _obscurePassword,
-                                      onToggleVisibility: () {
-                                        setState(() {
-                                          _obscurePassword = !_obscurePassword;
-                                        });
-                                      },
+                          
+                          const SizedBox(height: 30),
+                          
+                          // Animated floating logo container
+                          AnimatedBuilder(
+                            animation: _floatingAnimation,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, _floatingAnimation.value * 0.5),
+                                child: Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(25),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: pertaminaBlue.withOpacity(0.12),
+                                        blurRadius: 30,
+                                        offset: const Offset(0, 15),
+                                        spreadRadius: -5,
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.9),
+                                        blurRadius: 0,
+                                        offset: const Offset(0, -1),
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                      color: pertaminaBlue.withOpacity(0.1),
+                                      width: 1,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: _confirmPasswordController,
-                                      label: 'Confirm',
-                                      icon: Icons.lock_outline_rounded,
-                                      color: pertaminaGreen,
-                                      isPassword: true,
-                                      obscureText: _obscureConfirmPassword,
-                                      onToggleVisibility: () {
-                                        setState(() {
-                                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                                        });
-                                      },
-                                    ),
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              pertaminaBlue,
+                                              pertaminaGreen,
+                                              pertaminaRed,
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(15),
+                                        ),
+                                        child: const Icon(
+                                          Icons.person_add_rounded,
+                                          size: 40,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Create Account',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w800,
+                                          color: textPrimary,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Join the Enterprise Platform',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: textSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              
-                              const SizedBox(height: 20),
-                              
-                              // Phone Number Field
-                              _buildTextField(
-                                controller: _phoneNumberController,
-                                label: 'Phone Number',
-                                icon: Icons.phone_outlined,
-                                color: pertaminaRed,
-                              ),
-                              
-                              const SizedBox(height: 20),
-                              
-                              // Role Dropdown
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.04),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
                                 ),
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedRole,
-                                  style: TextStyle(
-                                    color: textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'Role',
-                                    labelStyle: TextStyle(
-                                      color: textSecondary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    prefixIcon: Container(
-                                      margin: const EdgeInsets.all(10),
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        color: pertaminaBlue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        Icons.badge_outlined,
-                                        color: pertaminaBlue,
-                                        size: 18,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: BorderSide(
-                                        color: borderColor,
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                      borderSide: BorderSide(
-                                        color: pertaminaBlue,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    filled: true,
-                                    fillColor: backgroundGray,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(value: 'user', child: Text('User')),
-                                    DropdownMenuItem(value: 'seller', child: Text('Seller')),
-                                  ],
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      _selectedRole = newValue!;
-                                    });
+                              );
+                            },
+                          ),
+                          
+                          const SizedBox(height: 35),
+                          
+                          // Registration Form Card
+                          Container(
+                            padding: const EdgeInsets.all(28),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(25),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: pertaminaBlue.withOpacity(0.12),
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 15),
+                                  spreadRadius: -5,
+                                ),
+                              ],
+                              border: Border.all(
+                                color: pertaminaBlue.withOpacity(0.1),
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Username Field
+                                _buildTextField(
+                                  controller: _usernameController,
+                                  label: 'Username',
+                                  icon: Icons.person_outline_rounded,
+                                  color: pertaminaBlue,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Username is required';
+                                    }
+                                    if (value.length < 3) {
+                                      return 'Username must be at least 3 characters';
+                                    }
+                                    return null;
                                   },
                                 ),
-                              ),
-                              
-                              const SizedBox(height: 35),
-                              
-                              // Create Account Button
-                              Container(
-                                width: double.infinity,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [pertaminaBlue, lightBlue],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: pertaminaBlue.withOpacity(0.4),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
+                                
+                                const SizedBox(height: 20),
+                                
+                                // Password Fields Row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _passwordController,
+                                        label: 'Password',
+                                        icon: Icons.lock_outline_rounded,
+                                        color: pertaminaGreen,
+                                        isPassword: true,
+                                        obscureText: _obscurePassword,
+                                        onToggleVisibility: () {
+                                          setState(() {
+                                            _obscurePassword = !_obscurePassword;
+                                          });
+                                        },
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Password is required';
+                                          }
+                                          if (value.length < 6) {
+                                            return 'Password must be at least 6 characters';
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: _confirmPasswordController,
+                                        label: 'Confirm',
+                                        icon: Icons.lock_outline_rounded,
+                                        color: pertaminaGreen,
+                                        isPassword: true,
+                                        obscureText: _obscureConfirmPassword,
+                                        onToggleVisibility: () {
+                                          setState(() {
+                                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                                          });
+                                        },
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Confirm password is required';
+                                          }
+                                          if (value != _passwordController.text) {
+                                            return 'Passwords do not match';
+                                          }
+                                          return null;
+                                        },
+                                      ),
                                     ),
                                   ],
                                 ),
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : () async {
-                                    setState(() => _isLoading = true);
-                                    
-                                    try {
-                                      final response = await request.postJson(
-                                        "http://127.0.0.1:8000/auth/register/",
-                                        jsonEncode({
-                                          "username": _usernameController.text,
-                                          "password1": _passwordController.text,
-                                          "password2": _confirmPasswordController.text,
-                                          "phone_number": _phoneNumberController.text,
-                                          "role": _selectedRole,
-                                        }),
-                                      );
+                                
+                                const SizedBox(height: 20),
+                                
+                                // Phone Number Field
+                                _buildTextField(
+                                  controller: _phoneNumberController,
+                                  label: 'Phone Number',
+                                  icon: Icons.phone_outlined,
+                                  color: pertaminaRed,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Phone number is required';
+                                    }
+                                    if (value.length < 10) {
+                                      return 'Please enter a valid phone number';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                
+                                const SizedBox(height: 20),
+                                
+                                // Role Dropdown
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.04),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedRole,
+                                    style: TextStyle(
+                                      color: textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    decoration: InputDecoration(
+                                      labelText: 'Role',
+                                      labelStyle: TextStyle(
+                                        color: textSecondary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      prefixIcon: Container(
+                                        margin: const EdgeInsets.all(10),
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: pertaminaBlue.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(
+                                          Icons.badge_outlined,
+                                          color: pertaminaBlue,
+                                          size: 18,
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: borderColor,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: pertaminaBlue,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: pertaminaRed,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(
+                                          color: pertaminaRed,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: backgroundGray,
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
+                                    ),
+                                    items: const [
+                                      DropdownMenuItem(value: 'user', child: Text('User')),
+                                      DropdownMenuItem(value: 'seller', child: Text('Seller')),
+                                    ],
+                                    onChanged: (String? newValue) {
+                                      setState(() {
+                                        _selectedRole = newValue!;
+                                      });
+                                    },
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please select a role';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                                
+                                const SizedBox(height: 35),
+                                
+                                // Create Account Button
+                                Container(
+                                  width: double.infinity,
+                                  height: 56,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [pertaminaBlue, lightBlue],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(18),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: pertaminaBlue.withOpacity(0.4),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : () async {
+                                      // Validasi form sebelum melanjutkan
+                                      if (!_formKey.currentState!.validate()) {
+                                        return;
+                                      }
+                                      
+                                      setState(() => _isLoading = true);
+                                      
+                                      try {
+                                        final response = await request.postJson(
+                                          "http://127.0.0.1:8000/auth/register/",
+                                          jsonEncode({
+                                            "username": _usernameController.text,
+                                            "password1": _passwordController.text,
+                                            "password2": _confirmPasswordController.text,
+                                            "phone_number": _phoneNumberController.text,
+                                            "role": _selectedRole,
+                                          }),
+                                        );
 
-                                      if (context.mounted) {
-                                        if (response['status'] == 'success') {
-                                          // Reset form setelah registrasi berhasil
-                                          _resetForm();
-                                          
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Row(
-                                                children: [
-                                                  Icon(Icons.check_circle, color: Colors.white, size: 20),
-                                                  const SizedBox(width: 12),
-                                                  const Text('Successfully registered!'),
-                                                ],
+                                        if (context.mounted) {
+                                          if (response['status'] == 'success') {
+                                            // Reset form setelah registrasi berhasil
+                                            _resetForm();
+                                            
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                                                    const SizedBox(width: 12),
+                                                    const Text('Successfully registered!'),
+                                                  ],
+                                                ),
+                                                backgroundColor: pertaminaGreen,
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
                                               ),
-                                              backgroundColor: pertaminaGreen,
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
+                                            );
+
+                                            widget.controller.animateToPage(0,
+                                                duration: const Duration(milliseconds: 500),
+                                                curve: Curves.ease);
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    Icon(Icons.error_outline, color: Colors.white, size: 20),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: Text(response['message'] ?? 'Failed to register!'),
+                                                    ),
+                                                  ],
+                                                ),
+                                                backgroundColor: pertaminaRed,
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
                                               ),
+                                            );
+                                          }
+                                        }
+                                      } finally {
+                                        if (mounted) setState(() => _isLoading = false);
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                    ),
+                                    child: _isLoading
+                                        ? const SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2.5,
                                             ),
-                                          );
-
+                                          )
+                                        : Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Container(
+                                                width: 24,
+                                                height: 24,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white.withOpacity(0.2),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.person_add_rounded,
+                                                  color: Colors.white,
+                                                  size: 16,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              const Text(
+                                                'Create Account',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                  letterSpacing: 0.3,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ),
+                                
+                                const SizedBox(height: 25),
+                                
+                                // Login Link - Fixed with GestureDetector
+                                Center(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Already have an account? ',
+                                        style: TextStyle(
+                                          color: textSecondary,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
                                           widget.controller.animateToPage(0,
                                               duration: const Duration(milliseconds: 500),
                                               curve: Curves.ease);
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Row(
-                                                children: [
-                                                  Icon(Icons.error_outline, color: Colors.white, size: 20),
-                                                  const SizedBox(width: 12),
-                                                  Expanded(
-                                                    child: Text(response['message'] ?? 'Failed to register!'),
-                                                  ),
-                                                ],
-                                              ),
-                                              backgroundColor: pertaminaRed,
-                                              behavior: SnackBarBehavior.floating,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    } finally {
-                                      if (mounted) setState(() => _isLoading = false);
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                  ),
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5,
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
                                           ),
-                                        )
-                                      : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              width: 24,
-                                              height: 24,
-                                              decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.2),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: const Icon(
-                                                Icons.person_add_rounded,
-                                                color: Colors.white,
-                                                size: 16,
-                                              ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'Sign In',
+                                            style: TextStyle(
+                                              color: pertaminaBlue,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              decoration: TextDecoration.underline,
+                                              decorationColor: pertaminaBlue,
                                             ),
-                                            const SizedBox(width: 12),
-                                            const Text(
-                                              'Create Account',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.white,
-                                                letterSpacing: 0.3,
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 40),
+                          
+                          // Footer with Pertamina branding - matching first page
+                          Column(
+                            children: [
+                              Text(
+                                'Powered by Pertamina Retail',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: const Color(0xFF7F8C8D),
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
-                              
-                              const SizedBox(height: 25),
-                              
-                              // Login Link - Fixed with GestureDetector
-                              Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Already have an account? ',
-                                      style: TextStyle(
-                                        color: textSecondary,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        widget.controller.animateToPage(0,
-                                            duration: const Duration(milliseconds: 500),
-                                            curve: Curves.ease);
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          'Sign In',
-                                          style: TextStyle(
-                                            color: pertaminaBlue,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            decoration: TextDecoration.underline,
-                                            decorationColor: pertaminaBlue,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(height: 6),
+                              Text(
+                                'Enterprise Registration Portal',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: const Color(0xFFBDC3C7),
+                                  fontWeight: FontWeight.w300,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        
-                        const SizedBox(height: 40),
-                        
-                        // Footer with Pertamina branding - matching first page
-                        Column(
-                          children: [
-                            Text(
-                              'Powered by Pertamina Retail',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: const Color(0xFF7F8C8D),
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Enterprise Registration Portal',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: const Color(0xFFBDC3C7),
-                                fontWeight: FontWeight.w300,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 30),
-                      ],
+                          
+                          const SizedBox(height: 30),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -724,6 +790,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
     bool isPassword = false,
     bool? obscureText,
     VoidCallback? onToggleVisibility,
+    String? Function(String?)? validator, // Tambah parameter validator
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -739,6 +806,7 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
       child: TextFormField(
         controller: controller,
         obscureText: isPassword ? (obscureText ?? false) : false,
+        validator: validator, // Tambah validator
         style: TextStyle(
           color: textPrimary,
           fontSize: 14,
@@ -790,11 +858,30 @@ class _RegisterPageState extends State<RegisterPage> with TickerProviderStateMix
               width: 2,
             ),
           ),
+          errorBorder: OutlineInputBorder( // Tambah error border
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: pertaminaRed,
+              width: 1.5,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder( // Tambah focused error border
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(
+              color: pertaminaRed,
+              width: 2,
+            ),
+          ),
           filled: true,
           fillColor: backgroundGray,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,
+          ),
+          errorStyle: TextStyle( // Style untuk error text
+            color: pertaminaRed,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),

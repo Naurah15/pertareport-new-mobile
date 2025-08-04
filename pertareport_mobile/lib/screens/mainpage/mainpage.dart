@@ -1,4 +1,4 @@
-import 'package:pertareport_mobile/screens/bookmark/bookmark_entry.dart';
+import 'package:pertareport_mobile/screens/profile/profile_entry.dart';
 import 'package:pertareport_mobile/screens/forum/forum_page.dart';
 import 'package:pertareport_mobile/screens/katalog/list_productentry.dart';
 import 'package:pertareport_mobile/widgets/mainpage/meal_list_view.dart';
@@ -620,7 +620,7 @@ class _MyDiaryScreenState extends State<MyDiaryScreen>
                                       );
                                     },
                                     child: Text(
-                                      'Favorites',
+                                      'Profile',
                                       textAlign: TextAlign.left,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
