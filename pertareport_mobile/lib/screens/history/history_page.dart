@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:pertareport_mobile/models/forum/forum_model.dart';
-import 'package:pertareport_mobile/screens/forum/add_new_form_page.dart';
-import 'package:pertareport_mobile/screens/forum/forum_detail.dart';
+import 'package:pertareport_mobile/models/history/history_model.dart';
+import 'package:pertareport_mobile/screens/history/add_new_form_page.dart';
+import 'package:pertareport_mobile/screens/history/history_detail.dart';
 import 'package:pertareport_mobile/widgets/forum/top_places.dart';
 
 class ForumPage extends StatefulWidget {

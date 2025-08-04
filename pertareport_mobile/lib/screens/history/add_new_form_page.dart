@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:pertareport_mobile/models/forum/forum_model.dart';
-import 'package:pertareport_mobile/screens/forum/forum_page.dart';
+import 'package:pertareport_mobile/models/history/history_model.dart';
+import 'package:pertareport_mobile/screens/history/history_page.dart';
 
 class AddNewFormPage extends StatefulWidget {
   final ForumEntry? forum;

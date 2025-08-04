@@ -1,6 +1,6 @@
 import 'package:pertareport_mobile/screens/profile/profile_entry.dart';
-import 'package:pertareport_mobile/screens/forum/forum_page.dart';
-import 'package:pertareport_mobile/screens/katalog/list_productentry.dart';
+import 'package:pertareport_mobile/screens/history/history_page.dart';
+import 'package:pertareport_mobile/screens/report/produce_report.dart';
 import 'package:pertareport_mobile/widgets/mainpage/meal_list_view.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;

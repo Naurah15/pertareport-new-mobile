@@ -1,7 +1,7 @@
 import 'package:pertareport_mobile/models/mainpage/tabIcon_data.dart';
 import 'package:flutter/material.dart';
-import 'package:pertareport_mobile/screens/forum/forum_page.dart';
-import 'package:pertareport_mobile/screens/katalog/list_productentry.dart';
+import 'package:pertareport_mobile/screens/history/history_page.dart';
+import 'package:pertareport_mobile/screens/report/produce_report.dart';
 import 'package:pertareport_mobile/widgets/mainpage/bottom_bar_view.dart';
 import 'package:pertareport_mobile/utils/mainpage_theme.dart';
 import 'package:pertareport_mobile/screens/mainpage/mainpage.dart';
