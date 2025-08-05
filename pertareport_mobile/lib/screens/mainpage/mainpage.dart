@@ -616,7 +616,7 @@ class _MyDiaryScreenState extends State<MyDiaryScreen>
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                const BookmarkPage()),
+                                                const ProfilePage()),
                                       );
                                     },
                                     child: Text(
