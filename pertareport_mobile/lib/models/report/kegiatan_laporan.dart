@@ -1,4 +1,4 @@
-// kegiatan_laporan.dart
+// models/kegiatan_laporan.dart
 import 'jenis_kegiatan.dart';
 import 'kegiatan_foto.dart';
 
@@ -7,7 +7,7 @@ class KegiatanLaporan {
   final JenisKegiatan kegiatan;
   final String? kegiatanOther;
   final String remark;
-  final String foto;
+  final String? foto;
   final List<KegiatanFoto> fotoList;
 
   KegiatanLaporan({
@@ -15,16 +15,19 @@ class KegiatanLaporan {
     required this.kegiatan,
     this.kegiatanOther,
     required this.remark,
-    required this.foto,
+    this.foto,
     required this.fotoList,
   });
 
   factory KegiatanLaporan.fromJson(Map<String, dynamic> json) {
     return KegiatanLaporan(
       id: json['id'],
-      kegiatan: JenisKegiatan.fromJson(json['kegiatan']),
+      kegiatan: JenisKegiatan(
+        id: 0, // Placeholder ID
+        nama: json['kegiatan'] ?? '',
+      ),
       kegiatanOther: json['kegiatan_other'],
-      remark: json['remark'],
+      remark: json['remark'] ?? '',
       foto: json['foto'],
       fotoList: (json['foto_list'] as List<dynamic>?)
               ?.map((f) => KegiatanFoto.fromJson(f))
@@ -42,5 +45,12 @@ class KegiatanLaporan {
       'foto': foto,
       'foto_list': fotoList.map((f) => f.toJson()).toList(),
     };
+  }
+  
+  String get displayName {
+    if (kegiatanOther != null && kegiatanOther!.isNotEmpty) {
+      return kegiatanOther!;
+    }
+    return kegiatan.nama;
   }
 }
