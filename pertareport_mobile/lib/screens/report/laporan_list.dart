@@ -139,8 +139,9 @@ class _LaporanListScreenState extends State<LaporanListScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Use displayName instead of kegiatan.nama for better display
                             Text(
-                              kegiatan.kegiatan.nama,
+                              kegiatan.displayName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -151,10 +152,42 @@ class _LaporanListScreenState extends State<LaporanListScreen> {
                               kegiatan.remark,
                               style: const TextStyle(fontSize: 12),
                             ),
+                            
+                            // Show single foto if exists
+                            if (kegiatan.foto != null) ...[
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Foto Utama:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  kegiatan.foto!,
+                                  width: 100,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 100,
+                                      height: 80,
+                                      color: Colors.grey[300],
+                                      child: const Icon(Icons.error),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                            
+                            // Show foto list if exists
                             if (kegiatan.fotoList.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               const Text(
-                                'Foto:',
+                                'Foto Tambahan:',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
@@ -172,27 +205,21 @@ class _LaporanListScreenState extends State<LaporanListScreen> {
                                       margin: const EdgeInsets.only(right: 8),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
-                                        child: foto.url != null
-                                            ? Image.network(
-                                                foto.url!,
-                                                width: 80,
-                                                height: 80,
-                                                fit: BoxFit.cover,
-                                                errorBuilder: (context, error, stackTrace) {
-                                                  return Container(
-                                                    width: 80,
-                                                    height: 80,
-                                                    color: Colors.grey[300],
-                                                    child: const Icon(Icons.error),
-                                                  );
-                                                },
-                                              )
-                                            : Container(
-                                                width: 80,
-                                                height: 80,
-                                                color: Colors.grey[300],
-                                                child: const Icon(Icons.image),
-                                              ),
+                                        // FIXED: Changed from foto.url to foto.foto
+                                        child: Image.network(
+                                          foto.foto, // Use foto field instead of url
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: 80,
+                                              height: 80,
+                                              color: Colors.grey[300],
+                                              child: const Icon(Icons.error),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     );
                                   },

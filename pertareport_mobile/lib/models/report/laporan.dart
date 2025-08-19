@@ -1,4 +1,4 @@
-// laporan.dart
+// models/report/laporan.dart
 import 'kegiatan_laporan.dart';
 
 class Laporan {
@@ -42,4 +42,7 @@ class Laporan {
       'kegiatan_list': kegiatanList.map((k) => k.toJson()).toList(),
     };
   }
+
+  @override
+  String toString() => noDocument;
 }

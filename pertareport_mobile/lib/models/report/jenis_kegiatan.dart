@@ -1,4 +1,4 @@
-// jenis_kegiatan.dart
+// models/report/jenis_kegiatan.dart
 class JenisKegiatan {
   final int id;
   final String nama;
@@ -18,4 +18,7 @@ class JenisKegiatan {
       'nama': nama,
     };
   }
+
+  @override
+  String toString() => nama;
 }
