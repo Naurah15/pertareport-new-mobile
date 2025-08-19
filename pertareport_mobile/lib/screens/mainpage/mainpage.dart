@@ -1,6 +1,8 @@
-import 'package:pertareport_mobile/screens/profile/profile_entry.dart';
+import 'package:pertareport_mobile/models/report/laporan.dart';
+import 'package:pertareport_mobile/screens/user_profile/profile_detail.dart';
 import 'package:pertareport_mobile/screens/history/history_page.dart';
-import 'package:pertareport_mobile/screens/report/produce_report.dart';
+import 'package:pertareport_mobile/screens/report/laporan_list.dart';
+import 'package:pertareport_mobile/screens/report/laporan_input_screen.dart';
 import 'package:pertareport_mobile/widgets/mainpage/meal_list_view.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
@@ -204,7 +206,7 @@ class _MyDiaryScreenState extends State<MyDiaryScreen>
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ProductEntryPage()),
+                        MaterialPageRoute(builder: (context) => const LaporanInputScreen()),
                       );
                     },
                     child: Container(
@@ -616,7 +618,7 @@ class _MyDiaryScreenState extends State<MyDiaryScreen>
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                const ProfilePage()),
+                                                const ProfileDetail()),
                                       );
                                     },
                                     child: Text(
