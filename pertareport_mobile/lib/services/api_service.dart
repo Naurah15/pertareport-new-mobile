@@ -4,9 +4,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:pertareport_mobile/models/report/jenis_kegiatan.dart';
 import 'package:pertareport_mobile/models/report/laporan.dart';
+import 'package:pertareport_mobile/services/api_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000/report/api'; // GANTI SESUAI IP ANDA
+  static final String baseUrl = ApiConfig.baseUrl;
   
   // Get all jenis kegiatan
   static Future<List<JenisKegiatan>> getJenisKegiatan() async {
