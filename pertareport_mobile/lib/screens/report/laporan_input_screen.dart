@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pertareport_mobile/services/api_service.dart';
 import 'package:pertareport_mobile/models/report/jenis_kegiatan.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart'; // untuk kIsWeb
+
 
 class LaporanInputScreen extends StatefulWidget {
   const LaporanInputScreen({Key? key}) : super(key: key);
@@ -25,7 +28,9 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> {
   // State variables
   List<JenisKegiatan> _jenisKegiatanList = [];
   JenisKegiatan? _selectedKegiatan;
-  List<File> _selectedImages = [];
+  List<File> _selectedImages = []; // mobile/desktop
+  List<Uint8List> _webSelectedImages = []; // khusus web
+
   bool _isLoading = false;
   bool _isLoadingJenisKegiatan = true;
 
@@ -52,20 +57,44 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> {
 
   Future<void> _pickImages() async {
     try {
-      final List<XFile> images = await _picker.pickMultiImage();
-      setState(() {
-        _selectedImages = images.map((xfile) => File(xfile.path)).toList();
-      });
+      final List<XFile> images = await _picker.pickMultiImage(
+        imageQuality: 70,
+        maxWidth: 1080,
+      );
+
+      if (images.isEmpty) return;
+
+      if (kIsWeb) {
+        // WEB → simpan sebagai bytes
+        List<Uint8List> bytesImages = [];
+        for (var img in images) {
+          bytesImages.add(await img.readAsBytes());
+        }
+        setState(() {
+          _webSelectedImages = bytesImages;
+        });
+      } else {
+        // MOBILE/DESKTOP → simpan sebagai File
+        setState(() {
+          _selectedImages = images.map((xfile) => File(xfile.path)).toList();
+        });
+      }
     } catch (e) {
-      _showErrorDialog('Error picking images: $e');
+      _showErrorDialog('Gagal memilih gambar. Detail: $e');
     }
   }
 
-  Future<void> _removeImage(int index) async {
-    setState(() {
+
+Future<void> _removeImage(int index) async {
+  setState(() {
+    if (kIsWeb) {
+      _webSelectedImages.removeAt(index);
+    } else {
       _selectedImages.removeAt(index);
-    });
-  }
+    }
+  });
+}
+
 
   Future<void> _submitLaporan() async {
     if (!_formKey.currentState!.validate()) {
@@ -285,20 +314,29 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> {
                                 height: 100,
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
-                                  itemCount: _selectedImages.length,
+                                  itemCount: kIsWeb ? _webSelectedImages.length : _selectedImages.length,
                                   itemBuilder: (context, index) {
+                                    final imageWidget = kIsWeb
+                                        ? Image.memory(
+                                            _webSelectedImages[index],
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.file(
+                                            _selectedImages[index],
+                                            width: 100,
+                                            height: 100,
+                                            fit: BoxFit.cover,
+                                          );
+
                                     return Container(
                                       margin: const EdgeInsets.only(right: 8),
                                       child: Stack(
                                         children: [
                                           ClipRRect(
                                             borderRadius: BorderRadius.circular(8),
-                                            child: Image.file(
-                                              _selectedImages[index],
-                                              width: 100,
-                                              height: 100,
-                                              fit: BoxFit.cover,
-                                            ),
+                                            child: imageWidget,
                                           ),
                                           Positioned(
                                             top: 4,
@@ -323,6 +361,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> {
                                       ),
                                     );
                                   },
+
                                 ),
                               ),
                           ],
