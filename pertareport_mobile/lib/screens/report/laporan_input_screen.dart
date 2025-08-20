@@ -9,6 +9,29 @@ import 'package:flutter/foundation.dart'; // untuk kIsWeb
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' as math;
 
+class ActivityEntry {
+  JenisKegiatan? jenisKegiatan;
+  String kegiatanOther;
+  String remark;
+  List<File> images; // mobile/desktop
+  List<Uint8List> webImages; // khusus web
+
+  ActivityEntry({
+    this.jenisKegiatan,
+    this.kegiatanOther = '',
+    this.remark = '',
+    List<File>? images,
+    List<Uint8List>? webImages,
+  }) : images = images ?? [], 
+       webImages = webImages ?? [];
+
+  bool get isValid {
+    return jenisKegiatan != null && 
+           remark.isNotEmpty &&
+           (jenisKegiatan!.nama.toLowerCase() != 'other' || kegiatanOther.isNotEmpty);
+  }
+}
+
 class LaporanInputScreen extends StatefulWidget {
   const LaporanInputScreen({Key? key}) : super(key: key);
 
@@ -20,17 +43,15 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
-  // Controllers
+  // Controllers for location and team
   final TextEditingController _lokasiController = TextEditingController();
   final TextEditingController _teamSupportController = TextEditingController();
-  final TextEditingController _remarkController = TextEditingController();
-  final TextEditingController _kegiatanOtherController = TextEditingController();
 
   // State variables
   List<JenisKegiatan> _jenisKegiatanList = [];
-  JenisKegiatan? _selectedKegiatan;
-  List<File> _selectedImages = []; // mobile/desktop
-  List<Uint8List> _webSelectedImages = []; // khusus web
+  List<ActivityEntry> _activityEntries = [ActivityEntry()]; // Start with one activity
+  List<TextEditingController> _remarkControllers = [TextEditingController()];
+  List<TextEditingController> _kegiatanOtherControllers = [TextEditingController()];
 
   bool _isLoading = false;
   bool _isLoadingJenisKegiatan = true;
@@ -174,7 +195,27 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
     }
   }
 
-  Future<void> _pickImages() async {
+  void _addActivityEntry() {
+    setState(() {
+      _activityEntries.add(ActivityEntry());
+      _remarkControllers.add(TextEditingController());
+      _kegiatanOtherControllers.add(TextEditingController());
+    });
+  }
+
+  void _removeActivityEntry(int index) {
+    if (_activityEntries.length > 1) {
+      setState(() {
+        _remarkControllers[index].dispose();
+        _kegiatanOtherControllers[index].dispose();
+        _activityEntries.removeAt(index);
+        _remarkControllers.removeAt(index);
+        _kegiatanOtherControllers.removeAt(index);
+      });
+    }
+  }
+
+  Future<void> _pickImagesForActivity(int activityIndex) async {
     try {
       final List<XFile> images = await _picker.pickMultiImage(
         imageQuality: 70,
@@ -190,12 +231,14 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
           bytesImages.add(await img.readAsBytes());
         }
         setState(() {
-          _webSelectedImages = bytesImages;
+          _activityEntries[activityIndex].webImages.addAll(bytesImages);
         });
       } else {
         // MOBILE/DESKTOP → simpan sebagai File
         setState(() {
-          _selectedImages = images.map((xfile) => File(xfile.path)).toList();
+          _activityEntries[activityIndex].images.addAll(
+            images.map((xfile) => File(xfile.path)).toList()
+          );
         });
       }
     } catch (e) {
@@ -203,12 +246,12 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
     }
   }
 
-  Future<void> _removeImage(int index) async {
+  Future<void> _removeImageFromActivity(int activityIndex, int imageIndex) async {
     setState(() {
       if (kIsWeb) {
-        _webSelectedImages.removeAt(index);
+        _activityEntries[activityIndex].webImages.removeAt(imageIndex);
       } else {
-        _selectedImages.removeAt(index);
+        _activityEntries[activityIndex].images.removeAt(imageIndex);
       }
     });
   }
@@ -218,9 +261,16 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
       return;
     }
 
-    if (_selectedKegiatan == null) {
-      _showErrorDialog('Please select a jenis kegiatan');
-      return;
+    // Validate all activity entries
+    for (int i = 0; i < _activityEntries.length; i++) {
+      final activity = _activityEntries[i];
+      activity.remark = _remarkControllers[i].text;
+      activity.kegiatanOther = _kegiatanOtherControllers[i].text;
+
+      if (!activity.isValid) {
+        _showErrorDialog('Kegiatan ke-${i + 1} tidak lengkap. Pastikan semua field terisi dengan benar.');
+        return;
+      }
     }
 
     setState(() {
@@ -228,32 +278,68 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
     });
 
     try {
-      // Step 1: Create laporan
+      // Create combined remark with all activities
+      String combinedRemark = '';
+      for (int i = 0; i < _activityEntries.length; i++) {
+        final activity = _activityEntries[i];
+        String activityName = activity.jenisKegiatan!.nama.toLowerCase() == 'other' 
+            ? activity.kegiatanOther 
+            : activity.jenisKegiatan!.nama;
+        
+        combinedRemark += 'KEGIATAN ${i + 1}: $activityName\n';
+        combinedRemark += '${activity.remark}\n';
+        if (i < _activityEntries.length - 1) {
+          combinedRemark += '\n---\n\n';
+        }
+      }
+
+      // Use the first activity's type as main activity type
+      final mainActivity = _activityEntries[0];
+      
+      // Create laporan with combined information
       final createResponse = await ApiService.createLaporan(
         lokasi: _lokasiController.text,
         namaTeamSupport: _teamSupportController.text,
-        remark: _remarkController.text,
-        kegiatanId: _selectedKegiatan!.id,
-        kegiatanOther: _selectedKegiatan!.nama.toLowerCase() == 'other' 
-            ? _kegiatanOtherController.text 
+        remark: combinedRemark,
+        kegiatanId: mainActivity.jenisKegiatan!.id,
+        kegiatanOther: mainActivity.jenisKegiatan!.nama.toLowerCase() == 'other' 
+            ? mainActivity.kegiatanOther 
             : null,
       );
 
-      // Step 2: Upload images if any
-      if (kIsWeb && _webSelectedImages.isNotEmpty) {
-        // Handle web image upload here if your API supports it
-        // You might need to modify ApiService to handle Uint8List for web
-      } else if (_selectedImages.isNotEmpty) {
+      final laporanId = createResponse.laporanId;
+
+      // Collect all images from all activities
+      List<File> allImages = [];
+      if (!kIsWeb) {
+        for (var activity in _activityEntries) {
+          allImages.addAll(activity.images);
+        }
+      }
+
+      // Upload all images if any
+      if (allImages.isNotEmpty) {
         await ApiService.uploadImages(
-          laporanId: createResponse.laporanId,
-          images: _selectedImages,
+          laporanId: laporanId,
+          images: allImages,
         );
+      } else if (kIsWeb) {
+        // Handle web images if needed
+        // For web implementation, you might need to modify ApiService
+        // to handle Uint8List images or convert them to File objects
+        bool hasWebImages = _activityEntries.any((activity) => activity.webImages.isNotEmpty);
+        if (hasWebImages) {
+          // Show info that web image upload might need special handling
+          print('Web images detected but upload method needs to be implemented');
+        }
       }
 
       // Success
       _showSuccessDialog(
-        'Laporan berhasil dibuat!\n'
-        'No. Dokumen: ${createResponse.noDocument}'
+        'Laporan berhasil dibuat!\n\n' +
+        'Nomor Dokumen: ${createResponse.noDocument}\n' +
+        'Total Kegiatan: ${_activityEntries.length}\n' +
+        'Total Foto: ${allImages.length}'
       );
 
       // Reset form
@@ -271,12 +357,19 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
   void _resetForm() {
     _lokasiController.clear();
     _teamSupportController.clear();
-    _remarkController.clear();
-    _kegiatanOtherController.clear();
+    
+    // Dispose existing controllers
+    for (var controller in _remarkControllers) {
+      controller.dispose();
+    }
+    for (var controller in _kegiatanOtherControllers) {
+      controller.dispose();
+    }
+    
     setState(() {
-      _selectedKegiatan = null;
-      _selectedImages.clear();
-      _webSelectedImages.clear();
+      _activityEntries = [ActivityEntry()];
+      _remarkControllers = [TextEditingController()];
+      _kegiatanOtherControllers = [TextEditingController()];
       _locationStatus = "Tekan tombol untuk mendapatkan lokasi";
     });
   }
@@ -366,11 +459,13 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
             ),
           ],
         ),
-        content: Text(
-          message,
-          style: TextStyle(
-            color: textSecondary,
-            fontSize: 14,
+        content: SingleChildScrollView(
+          child: Text(
+            message,
+            style: TextStyle(
+              color: textSecondary,
+              fontSize: 14,
+            ),
           ),
         ),
         actions: [
@@ -577,9 +672,9 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                                       ),
                                       const SizedBox(width: 12),
                                       Text(
-                                        'INPUT LAPORAN',
+                                        'SATU LAPORAN (${_activityEntries.length} KEGIATAN)',
                                         style: TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                           color: pertaminaBlue,
                                           letterSpacing: 1,
@@ -645,7 +740,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                                                 ),
                                                 const SizedBox(height: 12),
                                                 Text(
-                                                  'Form Laporan Kegiatan',
+                                                  'Laporan Multi Kegiatan',
                                                   style: TextStyle(
                                                     fontSize: 18,
                                                     fontWeight: FontWeight.w800,
@@ -655,7 +750,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  'Lengkapi semua data dengan benar',
+                                                  'Satu nomor laporan dengan beberapa kegiatan',
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     color: textSecondary,
@@ -682,41 +777,89 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                                       validator: (value) =>
                                           value == null || value.isEmpty ? "Nama team wajib diisi" : null,
                                     ),
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 30),
 
-                                    // Jenis Kegiatan Dropdown
-                                    _buildDropdown(),
-                                    const SizedBox(height: 20),
-
-                                    // Other Kegiatan Field (only show if "Other" is selected)
-                                    if (_selectedKegiatan?.nama.toLowerCase() == 'other') ...[
-                                      _buildTextField(
-                                        controller: _kegiatanOtherController,
-                                        label: 'Kegiatan Lainnya',
-                                        icon: Icons.edit_note_rounded,
-                                        color: pertaminaOrange,
-                                        validator: (value) => _selectedKegiatan?.nama.toLowerCase() == 'other' && 
-                                                           (value == null || value.isEmpty)
-                                            ? "Kegiatan lainnya wajib diisi" 
-                                            : null,
+                                    // Activities Header
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [pertaminaBlue.withOpacity(0.1), softBlue],
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: pertaminaBlue.withOpacity(0.2),
+                                          width: 1,
+                                        ),
                                       ),
-                                      const SizedBox(height: 20),
-                                    ],
-
-                                    // Remark Field
-                                    _buildTextField(
-                                      controller: _remarkController,
-                                      label: 'Remark',
-                                      icon: Icons.note_alt_outlined,
-                                      color: pertaminaRed,
-                                      maxLines: 3,
-                                      validator: (value) =>
-                                          value == null || value.isEmpty ? "Remark wajib diisi" : null,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: pertaminaBlue,
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: const Icon(
+                                              Icons.work_history_rounded,
+                                              color: Colors.white,
+                                              size: 20,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Daftar Kegiatan (${_activityEntries.length} item)',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: textPrimary,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Satu laporan dengan beberapa kegiatan berbeda',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: textSecondary,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [pertaminaGreen, Colors.green[400]!],
+                                              ),
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: pertaminaGreen.withOpacity(0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: IconButton(
+                                              onPressed: _addActivityEntry,
+                                              icon: const Icon(Icons.add_rounded, color: Colors.white),
+                                              tooltip: 'Tambah Kegiatan',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const SizedBox(height: 20),
 
-                                    // Image Selection Card
-                                    _buildImageCard(),
+                                    // Activity Entries List
+                                    ...List.generate(_activityEntries.length, (index) {
+                                      return _buildActivityCard(index);
+                                    }),
+
                                     const SizedBox(height: 30),
 
                                     // Submit Button
@@ -737,6 +880,493 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildActivityCard(int index) {
+    final activity = _activityEntries[index];
+    final colors = [pertaminaBlue, pertaminaGreen, pertaminaRed, pertaminaOrange];
+    final color = colors[index % colors.length];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Activity Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.task_alt_rounded,
+                  color: color,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Kegiatan ${index + 1}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              if (_activityEntries.length > 1)
+                Container(
+                  decoration: BoxDecoration(
+                    color: pertaminaRed.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    onPressed: () => _removeActivityEntry(index),
+                    icon: Icon(Icons.delete_outline_rounded, color: pertaminaRed, size: 18),
+                    tooltip: 'Hapus Kegiatan',
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Jenis Kegiatan Dropdown
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: DropdownButtonFormField<JenisKegiatan>(
+              value: activity.jenisKegiatan,
+              items: _jenisKegiatanList.map((JenisKegiatan kegiatan) {
+                return DropdownMenuItem<JenisKegiatan>(
+                  value: kegiatan,
+                  child: Text(
+                    kegiatan.nama,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+              style: TextStyle(
+                color: textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                labelText: "Jenis Kegiatan",
+                labelStyle: TextStyle(
+                  color: textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.work_outline_rounded,
+                    color: color,
+                    size: 18,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: borderColor,
+                    width: 1.5,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: color,
+                    width: 2,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: pertaminaRed,
+                    width: 1.5,
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: pertaminaRed,
+                    width: 2,
+                  ),
+                ),
+                filled: true,
+                fillColor: backgroundGray,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                errorStyle: TextStyle(
+                  color: pertaminaRed,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  activity.jenisKegiatan = value;
+                });
+              },
+              validator: (value) =>
+                  value == null ? "Jenis kegiatan wajib dipilih" : null,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Other Kegiatan Field (only show if "Other" is selected)
+          if (activity.jenisKegiatan?.nama.toLowerCase() == 'other') ...[
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextFormField(
+                controller: _kegiatanOtherControllers[index],
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  labelText: "Kegiatan Lainnya",
+                  labelStyle: TextStyle(
+                    color: textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  prefixIcon: Container(
+                    margin: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: pertaminaOrange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.edit_note_rounded,
+                      color: pertaminaOrange,
+                      size: 18,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: borderColor,
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: pertaminaOrange,
+                      width: 2,
+                    ),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: pertaminaRed,
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: pertaminaRed,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: backgroundGray,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  errorStyle: TextStyle(
+                    color: pertaminaRed,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                validator: (value) => activity.jenisKegiatan?.nama.toLowerCase() == 'other' && 
+                                   (value == null || value.isEmpty)
+                    ? "Kegiatan lainnya wajib diisi" 
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Remark Field
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextFormField(
+              controller: _remarkControllers[index],
+              maxLines: 3,
+              style: TextStyle(
+                color: textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                labelText: "Detail",
+                labelStyle: TextStyle(
+                  color: textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.note_alt_outlined,
+                    color: color,
+                    size: 18,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: borderColor,
+                    width: 1.5,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: color,
+                    width: 2,
+                  ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: pertaminaRed,
+                    width: 1.5,
+                  ),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(
+                    color: pertaminaRed,
+                    width: 2,
+                  ),
+                ),
+                filled: true,
+                fillColor: backgroundGray,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                errorStyle: TextStyle(
+                  color: pertaminaRed,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Remark wajib diisi" : null,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Image Selection for this activity
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: color.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.photo_camera_outlined,
+                      color: color,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Foto Kegiatan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${kIsWeb ? activity.webImages.length : activity.images.length} foto',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _pickImagesForActivity(index),
+                    icon: const Icon(Icons.add_a_photo_rounded, size: 16),
+                    label: const Text('Pilih Foto', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                  ),
+                ),
+                if ((kIsWeb ? activity.webImages : activity.images).isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 80,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: kIsWeb ? activity.webImages.length : activity.images.length,
+                      itemBuilder: (context, imageIndex) {
+                        final imageWidget = kIsWeb
+                            ? Image.memory(
+                                activity.webImages[imageIndex],
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                activity.images[imageIndex],
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              );
+
+                        return Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: imageWidget,
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () => _removeImageFromActivity(index, imageIndex),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: pertaminaRed,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 2,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -926,7 +1556,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                           size: 18,
                         ),
                       ),
-                                            enabledBorder: OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
                           color: borderColor,
@@ -1048,276 +1678,6 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
     );
   }
 
-  Widget _buildDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: DropdownButtonFormField<JenisKegiatan>(
-        value: _selectedKegiatan,
-        items: _jenisKegiatanList.map((JenisKegiatan kegiatan) {
-          return DropdownMenuItem<JenisKegiatan>(
-            value: kegiatan,
-            child: Text(
-              kegiatan.nama,
-              style: TextStyle(
-                color: textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          );
-        }).toList(),
-        style: TextStyle(
-          color: textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: "Jenis Kegiatan",
-          labelStyle: TextStyle(
-            color: textSecondary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(10),
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: pertaminaBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.work_outline_rounded,
-              color: pertaminaBlue,
-              size: 18,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: borderColor,
-              width: 1.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: pertaminaBlue,
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: pertaminaRed,
-              width: 1.5,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: pertaminaRed,
-              width: 2,
-            ),
-          ),
-          filled: true,
-          fillColor: backgroundGray,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          errorStyle: TextStyle(
-            color: pertaminaRed,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        onChanged: (value) {
-          setState(() {
-            _selectedKegiatan = value;
-          });
-        },
-        validator: (value) =>
-            value == null ? "Jenis kegiatan wajib dipilih" : null,
-      ),
-    );
-  }
-
-  Widget _buildImageCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: pertaminaOrange.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(
-          color: pertaminaOrange.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: pertaminaOrange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.photo_camera_outlined,
-                  color: pertaminaOrange,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Foto Kegiatan',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${kIsWeb ? _webSelectedImages.length : _selectedImages.length} foto',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [pertaminaOrange, Colors.orange[400]!],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: pertaminaOrange.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              onPressed: _pickImages,
-              icon: const Icon(Icons.add_a_photo_rounded, size: 18),
-              label: const Text('Pilih Foto', style: TextStyle(fontWeight: FontWeight.w600)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                elevation: 0,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-          if ((kIsWeb ? _webSelectedImages : _selectedImages).isNotEmpty) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: kIsWeb ? _webSelectedImages.length : _selectedImages.length,
-                itemBuilder: (context, index) {
-                  final imageWidget = kIsWeb
-                      ? Image.memory(
-                          _webSelectedImages[index],
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        )
-                      : Image.file(
-                          _selectedImages[index],
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                        );
-
-                  return Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: imageWidget,
-                        ),
-                        Positioned(
-                          top: 6,
-                          right: 6,
-                          child: GestureDetector(
-                            onTap: () => _removeImage(index),
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: pertaminaRed,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildSubmitButton() {
     return Container(
       width: double.infinity,
@@ -1367,15 +1727,15 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
-                      Icons.save_rounded,
+                      Icons.send_rounded,
                       color: Colors.white,
                       size: 16,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Simpan Laporan',
-                    style: TextStyle(
+                  Text(
+                    'Kirim Laporan (${_activityEntries.length} Kegiatan)',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -1402,7 +1762,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
         ),
         const SizedBox(height: 6),
         Text(
-          'Report Management System',
+          'Single Report Multi-Activity System',
           style: TextStyle(
             fontSize: 9,
             color: const Color(0xFFBDC3C7),
@@ -1420,8 +1780,15 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
     _fadeController.dispose();
     _lokasiController.dispose();
     _teamSupportController.dispose();
-    _remarkController.dispose();
-    _kegiatanOtherController.dispose();
+    
+    // Dispose all controllers
+    for (var controller in _remarkControllers) {
+      controller.dispose();
+    }
+    for (var controller in _kegiatanOtherControllers) {
+      controller.dispose();
+    }
+    
     super.dispose();
   }
 }
