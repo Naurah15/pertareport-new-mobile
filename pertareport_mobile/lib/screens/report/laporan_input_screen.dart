@@ -6,7 +6,7 @@ import 'package:pertareport_mobile/services/api_service.dart';
 import 'package:pertareport_mobile/models/report/jenis_kegiatan.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart'; // untuk kIsWeb
-
+import 'package:geolocator/geolocator.dart';
 
 class LaporanInputScreen extends StatefulWidget {
   const LaporanInputScreen({Key? key}) : super(key: key);
@@ -33,6 +33,8 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> {
 
   bool _isLoading = false;
   bool _isLoadingJenisKegiatan = true;
+  bool _isLoadingLocation = false;
+  String _locationStatus = "Tekan tombol untuk mendapatkan lokasi";
 
   @override
   void initState() {
@@ -52,6 +54,73 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> {
         _isLoadingJenisKegiatan = false;
       });
       _showErrorDialog('Error loading jenis kegiatan: $e');
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+      _locationStatus = "Mendapatkan lokasi...";
+    });
+
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _isLoadingLocation = false;
+          _locationStatus = "Layanan lokasi tidak aktif";
+        });
+        _showErrorDialog('Layanan lokasi tidak aktif. Silakan aktifkan GPS.');
+        return;
+      }
+
+      // Check location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _isLoadingLocation = false;
+            _locationStatus = "Izin lokasi ditolak";
+          });
+          _showErrorDialog('Izin akses lokasi ditolak.');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLoadingLocation = false;
+          _locationStatus = "Izin lokasi ditolak permanen";
+        });
+        _showErrorDialog('Izin akses lokasi ditolak permanen. Silakan aktifkan di pengaturan aplikasi.');
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      double lat = position.latitude;
+      double lon = position.longitude;
+      
+      // Format coordinates to 6 decimal places
+      String coordinates = "${lat.toStringAsFixed(6)}, ${lon.toStringAsFixed(6)}";
+      
+      setState(() {
+        _lokasiController.text = coordinates;
+        _isLoadingLocation = false;
+        _locationStatus = "Lokasi berhasil didapatkan";
+      });
+
+    } catch (e) {
+      setState(() {
+        _isLoadingLocation = false;
+        _locationStatus = "Gagal mendapatkan lokasi";
+      });
+      _showErrorDialog('Gagal mendapatkan lokasi: $e');
     }
   }
 
@@ -84,17 +153,15 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> {
     }
   }
 
-
-Future<void> _removeImage(int index) async {
-  setState(() {
-    if (kIsWeb) {
-      _webSelectedImages.removeAt(index);
-    } else {
-      _selectedImages.removeAt(index);
-    }
-  });
-}
-
+  Future<void> _removeImage(int index) async {
+    setState(() {
+      if (kIsWeb) {
+        _webSelectedImages.removeAt(index);
+      } else {
+        _selectedImages.removeAt(index);
+      }
+    });
+  }
 
   Future<void> _submitLaporan() async {
     if (!_formKey.currentState!.validate()) {
@@ -123,7 +190,10 @@ Future<void> _removeImage(int index) async {
       );
 
       // Step 2: Upload images if any
-      if (_selectedImages.isNotEmpty) {
+      if (kIsWeb && _webSelectedImages.isNotEmpty) {
+        // Handle web image upload here if your API supports it
+        // You might need to modify ApiService to handle Uint8List for web
+      } else if (_selectedImages.isNotEmpty) {
         await ApiService.uploadImages(
           laporanId: createResponse.laporanId,
           images: _selectedImages,
@@ -156,6 +226,8 @@ Future<void> _removeImage(int index) async {
     setState(() {
       _selectedKegiatan = null;
       _selectedImages.clear();
+      _webSelectedImages.clear();
+      _locationStatus = "Tekan tombol untuk mendapatkan lokasi";
     });
   }
 
@@ -207,16 +279,87 @@ Future<void> _removeImage(int index) async {
                 key: _formKey,
                 child: ListView(
                   children: [
-                    // Lokasi Field
-                    TextFormField(
-                      controller: _lokasiController,
-                      decoration: const InputDecoration(
-                        labelText: "Lokasi",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_on),
+                    // Location Field with GPS button
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Lokasi',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _lokasiController,
+                                    decoration: const InputDecoration(
+                                      labelText: "Koordinat Lokasi",
+                                      border: OutlineInputBorder(),
+                                      prefixIcon: Icon(Icons.location_on),
+                                      hintText: "Latitude, Longitude",
+                                    ),
+                                    validator: (value) =>
+                                        value == null || value.isEmpty ? "Lokasi wajib diisi" : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  onPressed: _isLoadingLocation ? null : _getCurrentLocation,
+                                  icon: _isLoadingLocation 
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : const Icon(Icons.gps_fixed),
+                                  label: const Text('GPS'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green[600],
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(
+                                  _locationStatus.contains("berhasil") 
+                                      ? Icons.check_circle 
+                                      : _locationStatus.contains("Gagal") || _locationStatus.contains("ditolak")
+                                          ? Icons.error 
+                                          : Icons.info,
+                                  size: 16,
+                                  color: _locationStatus.contains("berhasil") 
+                                      ? Colors.green 
+                                      : _locationStatus.contains("Gagal") || _locationStatus.contains("ditolak")
+                                          ? Colors.red 
+                                          : Colors.blue,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _locationStatus,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: _locationStatus.contains("berhasil") 
+                                        ? Colors.green 
+                                        : _locationStatus.contains("Gagal") || _locationStatus.contains("ditolak")
+                                            ? Colors.red 
+                                            : Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      validator: (value) =>
-                          value == null || value.isEmpty ? "Lokasi wajib diisi" : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -309,7 +452,7 @@ Future<void> _removeImage(int index) async {
                               label: const Text('Pilih Foto'),
                             ),
                             const SizedBox(height: 8),
-                            if (_selectedImages.isNotEmpty)
+                            if ((kIsWeb ? _webSelectedImages : _selectedImages).isNotEmpty)
                               SizedBox(
                                 height: 100,
                                 child: ListView.builder(
@@ -361,7 +504,6 @@ Future<void> _removeImage(int index) async {
                                       ),
                                     );
                                   },
-
                                 ),
                               ),
                           ],
