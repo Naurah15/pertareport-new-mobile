@@ -61,7 +61,38 @@ class ApiService {
     }
   }
 
-  // Upload images for laporan
+  // Add kegiatan to existing laporan
+  static Future<CreateLaporanResponse> addKegiatanToLaporan({
+    required int laporanId,
+    required String remark,
+    required int kegiatanId,
+    String? kegiatanOther,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/add-kegiatan/'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'laporan_id': laporanId,
+          'remark': remark,
+          'kegiatan_id': kegiatanId,
+          if (kegiatanOther != null) 'kegiatan_other': kegiatanOther,
+        }),
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return CreateLaporanResponse.fromJson(responseData);
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to add kegiatan to laporan');
+      }
+    } catch (e) {
+      throw Exception('Error adding kegiatan to laporan: $e');
+    }
+  }
+
+  // Upload images for laporan (old method - for backward compatibility)
   static Future<UploadImagesResponse> uploadImages({
     required int laporanId,
     required List<File> images,
@@ -91,6 +122,39 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error uploading images: $e');
+    }
+  }
+
+  // Upload images for specific kegiatan
+  static Future<UploadImagesResponse> uploadImagesForKegiatan({
+    required int kegiatanLaporanId,
+    required List<File> images,
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload-kegiatan-images/'),
+      );
+
+      request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
+
+      for (File image in images) {
+        request.files.add(
+          await http.MultipartFile.fromPath('images', image.path),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return UploadImagesResponse.fromJson(responseData);
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to upload images for kegiatan');
+      }
+    } catch (e) {
+      throw Exception('Error uploading images for kegiatan: $e');
     }
   }
 

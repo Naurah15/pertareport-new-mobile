@@ -278,69 +278,79 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
     });
 
     try {
-      // Create combined remark with all activities
-      String combinedRemark = '';
-      for (int i = 0; i < _activityEntries.length; i++) {
-        final activity = _activityEntries[i];
-        String activityName = activity.jenisKegiatan!.nama.toLowerCase() == 'other' 
-            ? activity.kegiatanOther 
-            : activity.jenisKegiatan!.nama;
-        
-        combinedRemark += 'KEGIATAN ${i + 1}: $activityName\n';
-        combinedRemark += '${activity.remark}\n';
-        if (i < _activityEntries.length - 1) {
-          combinedRemark += '\n---\n\n';
-        }
-      }
+      int laporanId;
+      String noDocument;
+      List<int> kegiatanLaporanIds = [];
 
-      // Use the first activity's type as main activity type
-      final mainActivity = _activityEntries[0];
-      
-      // Create laporan with combined information
+      // Step 1: Create main laporan with first activity
+      final firstActivity = _activityEntries[0];
       final createResponse = await ApiService.createLaporan(
         lokasi: _lokasiController.text,
         namaTeamSupport: _teamSupportController.text,
-        remark: combinedRemark,
-        kegiatanId: mainActivity.jenisKegiatan!.id,
-        kegiatanOther: mainActivity.jenisKegiatan!.nama.toLowerCase() == 'other' 
-            ? mainActivity.kegiatanOther 
+        remark: firstActivity.remark,
+        kegiatanId: firstActivity.jenisKegiatan!.id,
+        kegiatanOther: firstActivity.jenisKegiatan!.nama.toLowerCase() == 'other' 
+            ? firstActivity.kegiatanOther 
             : null,
       );
 
-      final laporanId = createResponse.laporanId;
+      laporanId = createResponse.laporanId;
+      noDocument = createResponse.noDocument;
+      kegiatanLaporanIds.add(createResponse.kegiatanLaporanId);
 
-      // Collect all images from all activities
-      List<File> allImages = [];
-      if (!kIsWeb) {
-        for (var activity in _activityEntries) {
-          allImages.addAll(activity.images);
-        }
-      }
-
-      // Upload all images if any
-      if (allImages.isNotEmpty) {
-        await ApiService.uploadImages(
+      // Step 2: Add remaining activities to the same laporan
+      for (int i = 1; i < _activityEntries.length; i++) {
+        final activity = _activityEntries[i];
+        
+        final addKegiatanResponse = await ApiService.addKegiatanToLaporan(
           laporanId: laporanId,
-          images: allImages,
+          remark: activity.remark,
+          kegiatanId: activity.jenisKegiatan!.id,
+          kegiatanOther: activity.jenisKegiatan!.nama.toLowerCase() == 'other' 
+              ? activity.kegiatanOther 
+              : null,
         );
-      } else if (kIsWeb) {
-        // Handle web images if needed
-        // For web implementation, you might need to modify ApiService
-        // to handle Uint8List images or convert them to File objects
-        bool hasWebImages = _activityEntries.any((activity) => activity.webImages.isNotEmpty);
-        if (hasWebImages) {
-          // Show info that web image upload might need special handling
-          print('Web images detected but upload method needs to be implemented');
+
+        kegiatanLaporanIds.add(addKegiatanResponse.kegiatanLaporanId);
+      }
+
+      // Step 3: Upload images for each kegiatan separately
+      for (int i = 0; i < _activityEntries.length; i++) {
+        final activity = _activityEntries[i];
+        final kegiatanLaporanId = kegiatanLaporanIds[i];
+        
+        if (!kIsWeb && activity.images.isNotEmpty) {
+          await ApiService.uploadImagesForKegiatan(
+            kegiatanLaporanId: kegiatanLaporanId,
+            images: activity.images,
+          );
+        } else if (kIsWeb && activity.webImages.isNotEmpty) {
+          // Handle web images if needed
+          print('Web images detected for kegiatan ${i + 1} but upload method needs implementation');
         }
       }
 
-      // Success
-      _showSuccessDialog(
-        'Laporan berhasil dibuat!\n\n' +
-        'Nomor Dokumen: ${createResponse.noDocument}\n' +
-        'Total Kegiatan: ${_activityEntries.length}\n' +
-        'Total Foto: ${allImages.length}'
-      );
+      // Calculate total images
+      int totalImages = 0;
+      for (var activity in _activityEntries) {
+        totalImages += kIsWeb ? activity.webImages.length : activity.images.length;
+      }
+
+      // Success message
+      String successMessage = 'Laporan Multi-Kegiatan berhasil dibuat!\n\n';
+      successMessage += 'Nomor Dokumen: $noDocument\n';
+      successMessage += 'Total Kegiatan: ${_activityEntries.length}\n';
+      successMessage += 'Total Foto: $totalImages\n\n';
+      successMessage += 'Kegiatan yang dibuat:\n';
+      for (int i = 0; i < _activityEntries.length; i++) {
+        final activity = _activityEntries[i];
+        String kegiatanName = activity.jenisKegiatan!.nama.toLowerCase() == 'other' 
+            ? activity.kegiatanOther 
+            : activity.jenisKegiatan!.nama;
+        successMessage += '${i + 1}. $kegiatanName\n';
+      }
+
+      _showSuccessDialog(successMessage);
 
       // Reset form
       _resetForm();
