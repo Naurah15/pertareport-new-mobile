@@ -1,10 +1,13 @@
 // services/api_service.dart
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data'; // Tambahkan import ini
 import 'package:http/http.dart' as http;
 import 'package:pertareport_mobile/models/report/jenis_kegiatan.dart';
 import 'package:pertareport_mobile/models/report/laporan.dart';
 import 'package:pertareport_mobile/services/api_config.dart';
+import 'package:flutter/foundation.dart'; // Untuk kIsWeb
+import 'package:http_parser/http_parser.dart';
 
 class ApiService {
   static final String baseUrl = ApiConfig.baseUrl;
@@ -125,7 +128,7 @@ class ApiService {
     }
   }
 
-  // Upload images for specific kegiatan
+  // Upload images for specific kegiatan (Mobile/Desktop version)
   static Future<UploadImagesResponse> uploadImagesForKegiatan({
     required int kegiatanLaporanId,
     required List<File> images,
@@ -135,6 +138,7 @@ class ApiService {
         'POST',
         Uri.parse('$baseUrl/upload-kegiatan-images/'),
       );
+
 
       request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
 
@@ -157,6 +161,144 @@ class ApiService {
       throw Exception('Error uploading images for kegiatan: $e');
     }
   }
+
+  // NEW: Upload web images (Uint8List) for specific kegiatan
+  static Future<UploadImagesResponse> uploadWebImagesForKegiatan({
+    required int kegiatanLaporanId,
+    required List<Uint8List> webImages,
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload-kegiatan-images/'),
+      );
+
+      request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
+
+      // Add images from bytes
+      for (int i = 0; i < webImages.length; i++) {
+        final imageBytes = webImages[i];
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'images',
+            imageBytes,
+            filename: 'image_$i.jpg', // Generate filename
+          ),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return UploadImagesResponse.fromJson(responseData);
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to upload web images for kegiatan');
+      }
+    } catch (e) {
+      throw Exception('Error uploading web images for kegiatan: $e');
+    }
+  }
+
+  // UNIVERSAL: Upload images for kegiatan (handles both File and Uint8List)
+
+  static Future<UploadImagesResponse> uploadUniversalImagesForKegiatan({
+    required int kegiatanLaporanId,
+    List<File>? mobileImages,
+    List<Uint8List>? webImages,
+  }) async {
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload-kegiatan-images/'),
+      );
+
+      request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
+      
+      print('Uploading to kegiatan laporan ID: $kegiatanLaporanId');
+
+      // Handle mobile/desktop images (File)
+      if (mobileImages != null && mobileImages.isNotEmpty) {
+        for (int i = 0; i < mobileImages.length; i++) {
+          final image = mobileImages[i];
+          print('Adding mobile image ${i + 1}: ${image.path}');
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'images', 
+              image.path,
+              filename: 'mobile_image_${i + 1}.jpg',
+            ),
+          );
+        }
+      }
+
+      // Handle web images (Uint8List)
+      if (webImages != null && webImages.isNotEmpty) {
+        for (int i = 0; i < webImages.length; i++) {
+          final imageBytes = webImages[i];
+          print('Adding web image ${i + 1}, size: ${imageBytes.length} bytes');
+          
+          // Tentukan content type berdasarkan bytes
+          String contentType = 'image/jpeg';
+          String filename = 'web_image_${i + 1}.jpg';
+          
+          // Cek magic bytes untuk PNG
+          if (imageBytes.length > 8) {
+            final pngHeader = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+            bool isPng = true;
+            for (int j = 0; j < 8 && j < imageBytes.length; j++) {
+              if (imageBytes[j] != pngHeader[j]) {
+                isPng = false;
+                break;
+              }
+            }
+            if (isPng) {
+              contentType = 'image/png';
+              filename = 'web_image_${i + 1}.png';
+            }
+          }
+          
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'images',
+              imageBytes,
+              filename: filename,
+              contentType: MediaType.parse(contentType),
+            ),
+          );
+        }
+      }
+
+      print('Sending request with ${request.files.length} files...');
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        final uploadResponse = UploadImagesResponse.fromJson(responseData);
+        
+        // Periksa apakah benar-benar ada file yang berhasil diupload
+        if (uploadResponse.files.isEmpty) {
+          throw Exception('No files were actually uploaded to the server');
+        }
+        
+        print('Successfully uploaded ${uploadResponse.files.length} files');
+        return uploadResponse;
+      } else {
+        throw Exception(responseData['message'] ?? 'Failed to upload images for kegiatan');
+      }
+    } catch (e) {
+      print('Error uploading images for kegiatan: $e');
+      throw Exception('Error uploading images for kegiatan: $e');
+    }
+  }
+
+// Jangan lupa tambahkan import untuk MediaType
 
   // Get all laporan list
   static Future<List<Laporan>> getLaporanList() async {

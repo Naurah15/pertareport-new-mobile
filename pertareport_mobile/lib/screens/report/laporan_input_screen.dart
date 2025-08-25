@@ -319,14 +319,26 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
         final activity = _activityEntries[i];
         final kegiatanLaporanId = kegiatanLaporanIds[i];
         
-        if (!kIsWeb && activity.images.isNotEmpty) {
-          await ApiService.uploadImagesForKegiatan(
-            kegiatanLaporanId: kegiatanLaporanId,
-            images: activity.images,
-          );
-        } else if (kIsWeb && activity.webImages.isNotEmpty) {
-          // Handle web images if needed
-          print('Web images detected for kegiatan ${i + 1} but upload method needs implementation');
+        // Check if there are images to upload
+        bool hasImages = false;
+        if (kIsWeb) {
+          hasImages = activity.webImages.isNotEmpty;
+        } else {
+          hasImages = activity.images.isNotEmpty;
+        }
+
+        if (hasImages) {
+          try {
+            await ApiService.uploadUniversalImagesForKegiatan(
+              kegiatanLaporanId: kegiatanLaporanId,
+              mobileImages: kIsWeb ? null : activity.images,
+              webImages: kIsWeb ? activity.webImages : null,
+            );
+            print('Images uploaded successfully for kegiatan ${i + 1}');
+          } catch (e) {
+            print('Error uploading images for kegiatan ${i + 1}: $e');
+            // Continue with other activities even if one fails
+          }
         }
       }
 
@@ -347,7 +359,8 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
         String kegiatanName = activity.jenisKegiatan!.nama.toLowerCase() == 'other' 
             ? activity.kegiatanOther 
             : activity.jenisKegiatan!.nama;
-        successMessage += '${i + 1}. $kegiatanName\n';
+        int imageCount = kIsWeb ? activity.webImages.length : activity.images.length;
+        successMessage += '${i + 1}. $kegiatanName ($imageCount foto)\n';
       }
 
       _showSuccessDialog(successMessage);
