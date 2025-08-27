@@ -96,7 +96,7 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
                   return;
                 }
                 setState(() {
-                  tabBody = const ForumPage();
+                  tabBody = const HistoryPage();
                 });
               });
             } else if (index == 2) {
@@ -105,7 +105,7 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
                   return;
                 }
                 setState(() {
-                  tabBody = const ForumPage();
+                  tabBody = const HistoryPage();
                 });
               });
             } else if (index == 3) {
@@ -114,7 +114,7 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
                   return;
                 }
                 setState(() {
-                  tabBody = const ForumPage();
+                  tabBody = const HistoryPage();
                 });
               });
             }

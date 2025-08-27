@@ -1,12 +1,14 @@
-// services/api_service.dart
+// services/api_service.dart - Fixed version with all static methods
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data'; // Tambahkan import ini
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:pertareport_mobile/models/report/jenis_kegiatan.dart';
 import 'package:pertareport_mobile/models/report/laporan.dart';
+import 'package:pertareport_mobile/models/history/history_laporan.dart';
+import 'package:pertareport_mobile/models/history/history_summary.dart';
 import 'package:pertareport_mobile/services/api_config.dart';
-import 'package:flutter/foundation.dart'; // Untuk kIsWeb
+import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
 
 class ApiService {
@@ -139,7 +141,6 @@ class ApiService {
         Uri.parse('$baseUrl/upload-kegiatan-images/'),
       );
 
-
       request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
 
       for (File image in images) {
@@ -162,7 +163,7 @@ class ApiService {
     }
   }
 
-  // NEW: Upload web images (Uint8List) for specific kegiatan
+  // Upload web images for specific kegiatan
   static Future<UploadImagesResponse> uploadWebImagesForKegiatan({
     required int kegiatanLaporanId,
     required List<Uint8List> webImages,
@@ -175,14 +176,13 @@ class ApiService {
 
       request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
 
-      // Add images from bytes
       for (int i = 0; i < webImages.length; i++) {
         final imageBytes = webImages[i];
         request.files.add(
           http.MultipartFile.fromBytes(
             'images',
             imageBytes,
-            filename: 'image_$i.jpg', // Generate filename
+            filename: 'image_$i.jpg',
           ),
         );
       }
@@ -201,8 +201,7 @@ class ApiService {
     }
   }
 
-  // UNIVERSAL: Upload images for kegiatan (handles both File and Uint8List)
-
+  // Universal upload images for kegiatan
   static Future<UploadImagesResponse> uploadUniversalImagesForKegiatan({
     required int kegiatanLaporanId,
     List<File>? mobileImages,
@@ -239,11 +238,10 @@ class ApiService {
           final imageBytes = webImages[i];
           print('Adding web image ${i + 1}, size: ${imageBytes.length} bytes');
           
-          // Tentukan content type berdasarkan bytes
           String contentType = 'image/jpeg';
           String filename = 'web_image_${i + 1}.jpg';
           
-          // Cek magic bytes untuk PNG
+          // Check for PNG magic bytes
           if (imageBytes.length > 8) {
             final pngHeader = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
             bool isPng = true;
@@ -282,7 +280,6 @@ class ApiService {
       if (response.statusCode == 200) {
         final uploadResponse = UploadImagesResponse.fromJson(responseData);
         
-        // Periksa apakah benar-benar ada file yang berhasil diupload
         if (uploadResponse.files.isEmpty) {
           throw Exception('No files were actually uploaded to the server');
         }
@@ -297,8 +294,6 @@ class ApiService {
       throw Exception('Error uploading images for kegiatan: $e');
     }
   }
-
-// Jangan lupa tambahkan import untuk MediaType
 
   // Get all laporan list
   static Future<List<Laporan>> getLaporanList() async {
@@ -318,9 +313,161 @@ class ApiService {
       throw Exception('Error fetching laporan list: $e');
     }
   }
+
+  // ========== HISTORY METHODS (NOW STATIC) ==========
+  
+  /// Get history summary/dashboard data
+  static Future<HistorySummary> getHistorySummary() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/history/summary/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await _getAuthToken()}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return HistorySummary.fromJson(data);
+      } else {
+        throw Exception('Failed to load summary: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading summary: $e');
+    }
+  }
+
+  /// Get history list of reports for the current user
+  static Future<List<HistoryLaporan>> getHistoryList() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/history/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await _getAuthToken()}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> laporanList = data['laporan_list'] ?? [];
+        
+        return laporanList
+            .map((json) => HistoryLaporan.fromJson(json))
+            .toList();
+      } else {
+        throw Exception('Failed to load history: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading history: $e');
+    }
+  }
+
+  /// Download report file (Excel or PDF)
+  static Future<Uint8List> downloadLaporanFile(int laporanId, String type) async {
+    try {
+      final endpoint = type == 'excel' 
+          ? '$baseUrl/history/download/excel/$laporanId/'
+          : '$baseUrl/history/download/pdf/$laporanId/';
+      
+      final response = await http.get(
+        Uri.parse(endpoint),
+        headers: {
+          'Authorization': 'Bearer ${await _getAuthToken()}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        throw Exception('Failed to download file: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error downloading file: $e');
+    }
+  }
+
+  /// Get download URL for web (direct link)
+  static String getDownloadUrl(int laporanId, String type) {
+    return type == 'excel' 
+        ? '$baseUrl/history/download/excel/$laporanId/'
+        : '$baseUrl/history/download/pdf/$laporanId/';
+  }
+
+  /// Search history reports
+  static Future<List<HistoryLaporan>> searchHistory({
+    String? query,
+    String? filter,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      Map<String, String> queryParams = {};
+      
+      if (query != null && query.isNotEmpty) queryParams['search'] = query;
+      if (filter != null && filter != 'all') queryParams['filter'] = filter;
+      if (startDate != null) queryParams['start_date'] = startDate.toIso8601String();
+      if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
+
+      final uri = Uri.parse('$baseUrl/history/search/').replace(queryParameters: queryParams);
+      
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await _getAuthToken()}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> results = data['results'] ?? [];
+        
+        return results
+            .map((json) => HistoryLaporan.fromJson(json))
+            .toList();
+      } else {
+        throw Exception('Failed to search history: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error searching history: $e');
+    }
+  }
+
+  /// Get activity statistics for dashboard
+  static Future<Map<String, dynamic>> getActivityStats() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/history/stats/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${await _getAuthToken()}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load stats: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error loading stats: $e');
+    }
+  }
+
+  // Helper method to get auth token - implement based on your auth system
+  static Future<String> _getAuthToken() async {
+    // TODO: Implement your authentication token retrieval logic
+    // This could be from SharedPreferences, Secure Storage, etc.
+    // Example:
+    // final prefs = await SharedPreferences.getInstance();
+    // return prefs.getString('auth_token') ?? '';
+    return 'your-auth-token-here';
+  }
 }
 
-// Response model classes untuk API responses
+// Response model classes
 class CreateLaporanResponse {
   final String status;
   final String message;

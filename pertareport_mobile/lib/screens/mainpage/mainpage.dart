@@ -326,7 +326,7 @@ class _MyDiaryScreenState extends State<MyDiaryScreen>
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ForumPage()),
+                        MaterialPageRoute(builder: (context) => const HistoryPage()),
                       );
                     },
                     child: Container(
