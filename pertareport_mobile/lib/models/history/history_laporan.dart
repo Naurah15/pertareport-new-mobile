@@ -22,11 +22,13 @@ class HistoryLaporan {
 
   factory HistoryLaporan.fromJson(Map<String, dynamic> json) {
     return HistoryLaporan(
-      id: json['id'],
-      lokasi: json['lokasi'],
-      namaTeamSupport: json['nama_team_support'],
-      tanggalProses: DateTime.parse(json['tanggal_proses']),
-      noDocument: json['no_document'],
+      id: json['id'] ?? 0,
+      lokasi: json['lokasi'] ?? '',
+      namaTeamSupport: json['nama_team_support'] ?? '',
+      tanggalProses: json['tanggal_proses'] != null
+          ? DateTime.parse(json['tanggal_proses'])
+          : DateTime.now(),
+      noDocument: json['no_document'] ?? '',
       kegiatanList: (json['kegiatan_list'] as List<dynamic>?)
               ?.map((k) => KegiatanLaporan.fromJson(k))
               .toList() ??
@@ -34,6 +36,7 @@ class HistoryLaporan {
       canDownload: json['can_download'] ?? true,
     );
   }
+
 
   Map<String, dynamic> toJson() {
     return {

@@ -24,16 +24,18 @@ class HistorySummary {
       totalActivities: json['total_activities'] ?? 0,
       totalPhotos: json['total_photos'] ?? 0,
       lastReportDate: json['last_report_date'] != null
-          ? DateTime.parse(json['last_report_date'])
+          ? DateTime.tryParse(json['last_report_date'])
           : null,
       mostActiveLocation: json['most_active_location'] ?? '',
-      activityTypeCount: Map<String, int>.from(json['activity_type_count'] ?? {}),
+      activityTypeCount: (json['activity_type_count'] ?? {})
+          .map<String, int>((k, v) => MapEntry(k.toString(), v ?? 0)),
       monthlyStats: (json['monthly_stats'] as List<dynamic>?)
               ?.map((m) => MonthlyReport.fromJson(m))
               .toList() ??
           [],
     );
   }
+
 
   String get lastReportFormatted {
     if (lastReportDate == null) return 'No reports yet';

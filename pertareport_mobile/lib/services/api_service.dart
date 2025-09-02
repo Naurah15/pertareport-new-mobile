@@ -12,13 +12,14 @@ import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
 
 class ApiService {
-  static final String baseUrl = ApiConfig.baseUrl;
+  static final String reportUrl = ApiConfig.baseUrlReport;
+  static final String historyUrl = ApiConfig.baseUrlHistory;
   
   // Get all jenis kegiatan
   static Future<List<JenisKegiatan>> getJenisKegiatan() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/jenis-kegiatan/'),
+        Uri.parse('${reportUrl}jenis-kegiatan/'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -43,7 +44,7 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/laporan/'),
+        Uri.parse('${reportUrl}laporan/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'lokasi': lokasi,
@@ -75,7 +76,7 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/add-kegiatan/'),
+        Uri.parse('${reportUrl}add-kegiatan/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'laporan_id': laporanId,
@@ -105,7 +106,7 @@ class ApiService {
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/upload-images/'),
+        Uri.parse('${reportUrl}upload-images/'),
       );
 
       request.fields['laporan_id'] = laporanId.toString();
@@ -138,7 +139,7 @@ class ApiService {
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/upload-kegiatan-images/'),
+        Uri.parse('${reportUrl}upload-kegiatan-images/'),
       );
 
       request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
@@ -171,7 +172,7 @@ class ApiService {
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/upload-kegiatan-images/'),
+        Uri.parse('${reportUrl}upload-kegiatan-images/'),
       );
 
       request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
@@ -210,7 +211,7 @@ class ApiService {
     try {
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('$baseUrl/upload-kegiatan-images/'),
+        Uri.parse('${reportUrl}upload-kegiatan-images/'),
       );
 
       request.fields['kegiatan_laporan_id'] = kegiatanLaporanId.toString();
@@ -299,7 +300,7 @@ class ApiService {
   static Future<List<Laporan>> getLaporanList() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/laporan-list/'),
+        Uri.parse('${historyUrl}laporan-list/'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -320,7 +321,7 @@ class ApiService {
   static Future<HistorySummary> getHistorySummary() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/history/summary/'),
+        Uri.parse('${historyUrl}/history/summary/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${await _getAuthToken()}',
@@ -342,34 +343,43 @@ class ApiService {
   static Future<List<HistoryLaporan>> getHistoryList() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/history/'),
+        Uri.parse('${ApiConfig.baseUrlHistory}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${await _getAuthToken()}',
         },
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        final List<dynamic> laporanList = data['laporan_list'] ?? [];
-        
-        return laporanList
-            .map((json) => HistoryLaporan.fromJson(json))
-            .toList();
+        final responseData = json.decode(response.body);
+
+        if (responseData is Map && responseData.containsKey('laporan_list')) {
+          final List<dynamic> data = responseData['laporan_list'];
+          return data.map((item) => HistoryLaporan.fromJson(item)).toList();
+        } else if (responseData is List) {
+          return responseData.map((item) => HistoryLaporan.fromJson(item)).toList();
+        } else {
+          throw Exception('Unexpected response format');
+        }
       } else {
         throw Exception('Failed to load history: ${response.statusCode}');
       }
     } catch (e) {
+      print('Error in getHistoryList: $e');
       throw Exception('Error loading history: $e');
     }
   }
+
 
   /// Download report file (Excel or PDF)
   static Future<Uint8List> downloadLaporanFile(int laporanId, String type) async {
     try {
       final endpoint = type == 'excel' 
-          ? '$baseUrl/history/download/excel/$laporanId/'
-          : '$baseUrl/history/download/pdf/$laporanId/';
+          ? '$historyUrl/history/download/excel/$laporanId/'
+          : '$historyUrl/history/download/pdf/$laporanId/';
       
       final response = await http.get(
         Uri.parse(endpoint),
@@ -391,8 +401,8 @@ class ApiService {
   /// Get download URL for web (direct link)
   static String getDownloadUrl(int laporanId, String type) {
     return type == 'excel' 
-        ? '$baseUrl/history/download/excel/$laporanId/'
-        : '$baseUrl/history/download/pdf/$laporanId/';
+        ? '$historyUrl/history/download/excel/$laporanId/'
+        : '$historyUrl/history/download/pdf/$laporanId/';
   }
 
   /// Search history reports
@@ -410,7 +420,7 @@ class ApiService {
       if (startDate != null) queryParams['start_date'] = startDate.toIso8601String();
       if (endDate != null) queryParams['end_date'] = endDate.toIso8601String();
 
-      final uri = Uri.parse('$baseUrl/history/search/').replace(queryParameters: queryParams);
+      final uri = Uri.parse('${historyUrl}history/search/').replace(queryParameters: queryParams);
       
       final response = await http.get(
         uri,
@@ -439,7 +449,7 @@ class ApiService {
   static Future<Map<String, dynamic>> getActivityStats() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/history/stats/'),
+        Uri.parse('${historyUrl}history/stats/'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${await _getAuthToken()}',
