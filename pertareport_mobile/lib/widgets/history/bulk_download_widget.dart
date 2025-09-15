@@ -15,56 +15,147 @@ class BulkDownloadWidget extends StatelessWidget {
     required this.hasData,
   }) : super(key: key);
 
-  static const Color pertaminaRed = Color(0xFFE31E24);
-  static const Color pertaminaBlue = Color(0xFF003876);
+  // Pertamina Corporate Colors
+  static const Color pertaminaBlue = Color(0xFF0E4A6B);
+  static const Color pertaminaGreen = Color(0xFF1B5E20);
+  static const Color pertaminaRed = Color(0xFFD32F2F);
+  static const Color pertaminaOrange = Color(0xFFFF7043);
+  static const Color lightBlue = Color(0xFF1565C0);
+  static const Color backgroundGray = Color(0xFFF5F7FA);
+  static const Color softBlue = Color(0xFFE8EDF5);
+  static const Color textPrimary = Color(0xFF2C3E50);
+  static const Color textSecondary = Color(0xFF34495E);
+  static const Color borderColor = Color(0xFFE5E7EB);
 
   @override
   Widget build(BuildContext context) {
     if (!hasData) return const SizedBox.shrink();
 
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cloud_download_rounded,
+            color: textSecondary,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'Download:',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: textSecondary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          
+          // Excel button
+          _buildCompactButton(
+            context: context,
+            icon: Icons.table_chart_rounded,
+            label: 'Excel',
+            color: pertaminaGreen,
             onPressed: () => _downloadBulk(context, 'excel'),
-            icon: const Icon(Icons.table_chart),
-            label: const Text('Download All Excel'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton.icon(
+          
+          const SizedBox(width: 8),
+          
+          // PDF button
+          _buildCompactButton(
+            context: context,
+            icon: Icons.picture_as_pdf_rounded,
+            label: 'PDF',
+            color: pertaminaRed,
             onPressed: () => _downloadBulk(context, 'pdf'),
-            icon: const Icon(Icons.picture_as_pdf),
-            label: const Text('Download All PDF'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: pertaminaRed,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: color.withOpacity(0.3), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 16,
               ),
-            ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
+  }
+
+  String _getFilterSummary() {
+    List<String> filters = [];
+    
+    if (filter.searchQuery != null && filter.searchQuery!.isNotEmpty) {
+      filters.add('pencarian');
+    }
+    
+    if (filter.startDate != null || filter.endDate != null) {
+      filters.add('tanggal');
+    }
+    
+    return filters.join(', ');
   }
 
   Future<void> _downloadBulk(BuildContext context, String type) async {
     try {
-      // Show downloading indicator
+      // Show downloading indicator with better styling
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Preparing ${type.toUpperCase()} download...'),
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text('Menyiapkan download ${type.toUpperCase()}...'),
+            ],
+          ),
+          backgroundColor: pertaminaBlue,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -80,16 +171,38 @@ class BulkDownloadWidget extends StatelessWidget {
         // For now, just show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${type.toUpperCase()} file downloaded successfully'),
-            backgroundColor: Colors.green,
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text('File ${type.toUpperCase()} berhasil didownload'),
+              ],
+            ),
+            backgroundColor: pertaminaGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error downloading ${type.toUpperCase()}: $e'),
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text('Error download ${type.toUpperCase()}: $e'),
+              ),
+            ],
+          ),
           backgroundColor: pertaminaRed,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       );
     }

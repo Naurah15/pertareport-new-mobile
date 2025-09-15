@@ -79,8 +79,45 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final query = _filter.searchQuery!.toLowerCase();
       _filteredLaporanList = _filteredLaporanList.where((laporan) {
         return laporan.noDocument.toLowerCase().contains(query) ||
-               laporan.lokasi.toLowerCase().contains(query) ||
-               laporan.namaTeamSupport.toLowerCase().contains(query);
+              laporan.lokasi.toLowerCase().contains(query) ||
+              laporan.namaTeamSupport.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    // Apply date range filter
+    if (_filter.startDate != null) {
+      _filteredLaporanList = _filteredLaporanList.where((laporan) {
+        // Compare dates without time component
+        final laporanDate = DateTime(
+          laporan.tanggalProses.year,
+          laporan.tanggalProses.month,
+          laporan.tanggalProses.day,
+        );
+        final filterStartDate = DateTime(
+          _filter.startDate!.year,
+          _filter.startDate!.month,
+          _filter.startDate!.day,
+        );
+        return laporanDate.isAtSameMomentAs(filterStartDate) || 
+              laporanDate.isAfter(filterStartDate);
+      }).toList();
+    }
+
+    if (_filter.endDate != null) {
+      _filteredLaporanList = _filteredLaporanList.where((laporan) {
+        // Compare dates without time component
+        final laporanDate = DateTime(
+          laporan.tanggalProses.year,
+          laporan.tanggalProses.month,
+          laporan.tanggalProses.day,
+        );
+        final filterEndDate = DateTime(
+          _filter.endDate!.year,
+          _filter.endDate!.month,
+          _filter.endDate!.day,
+        );
+        return laporanDate.isAtSameMomentAs(filterEndDate) || 
+              laporanDate.isBefore(filterEndDate);
       }).toList();
     }
   }
