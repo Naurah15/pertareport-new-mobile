@@ -9,6 +9,9 @@ import 'package:flutter/foundation.dart';
 
 class HistoryApiService {
   static final String baseUrl = ApiConfig.baseUrlHistory;
+  
+  // Add your media base URL here - replace with your actual media server URL
+  static final String mediaBaseUrl = ApiConfig.mediaBaseUrl; // e.g., "https://your-api-server.com"
 
   /// Get history list with optional filters
   static Future<List<HistoryLaporan>> getHistoryList({
@@ -51,7 +54,7 @@ class HistoryApiService {
         }
 
         List<HistoryLaporan> laporanList = data
-            .map((item) => HistoryLaporan.fromJson(item))
+            .map((item) => HistoryLaporan.fromJson(item, mediaBaseUrl))
             .toList();
 
         // Apply search filter if exists
@@ -72,6 +75,21 @@ class HistoryApiService {
       print('Error in getHistoryList: $e');
       throw Exception('Error loading history: $e');
     }
+  }
+
+  /// Convert relative photo path to full URL
+  static String? getFullPhotoUrl(String? photoPath) {
+    if (photoPath == null || photoPath.isEmpty) return null;
+    
+    // If it's already a full URL, return as is
+    if (photoPath.startsWith('http')) {
+      return photoPath;
+    }
+    
+    // Remove leading slash if present
+    String cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
+    
+    return '$mediaBaseUrl/$cleanPath';
   }
 
   /// Download individual laporan file (Excel or PDF)

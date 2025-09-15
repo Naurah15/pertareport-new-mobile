@@ -16,7 +16,7 @@ class HistoryLaporan {
     required this.kegiatanList,
   });
 
-  factory HistoryLaporan.fromJson(Map<String, dynamic> json) {
+  factory HistoryLaporan.fromJson(Map<String, dynamic> json, String mediaBaseUrl) {
     return HistoryLaporan(
       id: json['id'],
       noDocument: json['no_document'],
@@ -24,7 +24,7 @@ class HistoryLaporan {
       namaTeamSupport: json['nama_team_support'] ?? '',
       tanggalProses: DateTime.parse(json['tanggal_proses']),
       kegiatanList: (json['kegiatan_list'] as List<dynamic>?)
-          ?.map((item) => HistoryKegiatan.fromJson(item))
+          ?.map((item) => HistoryKegiatan.fromJson(item, mediaBaseUrl))
           .toList() ?? [],
     );
   }
@@ -44,7 +44,7 @@ class HistoryLaporan {
 class HistoryKegiatan {
   final String displayName;
   final String remark;
-  final String? foto;
+  final String? foto; // This will contain the full URL
   final List<HistoryFoto> fotoList;
 
   HistoryKegiatan({
@@ -54,15 +54,28 @@ class HistoryKegiatan {
     required this.fotoList,
   });
 
-  factory HistoryKegiatan.fromJson(Map<String, dynamic> json) {
+  factory HistoryKegiatan.fromJson(Map<String, dynamic> json, String mediaBaseUrl) {
     return HistoryKegiatan(
       displayName: json['display_name'] ?? '',
       remark: json['remark'] ?? '',
-      foto: json['foto'],
+      foto: _buildFullPhotoUrl(json['foto'], mediaBaseUrl),
       fotoList: (json['foto_list'] as List<dynamic>?)
-          ?.map((item) => HistoryFoto.fromJson(item))
+          ?.map((item) => HistoryFoto.fromJson(item, mediaBaseUrl))
           .toList() ?? [],
     );
+  }
+
+  static String? _buildFullPhotoUrl(String? photoPath, String mediaBaseUrl) {
+    if (photoPath == null || photoPath.isEmpty) return null;
+    
+    // If it's already a full URL, return as is
+    if (photoPath.startsWith('http')) {
+      return photoPath;
+    }
+    
+    // Remove leading slash if present and build full URL
+    String cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
+    return '$mediaBaseUrl/$cleanPath';
   }
 
   Map<String, dynamic> toJson() {
@@ -77,18 +90,29 @@ class HistoryKegiatan {
 
 class HistoryFoto {
   final int id;
-  final String foto;
+  final String foto; // This will contain the full URL
 
   HistoryFoto({
     required this.id,
     required this.foto,
   });
 
-  factory HistoryFoto.fromJson(Map<String, dynamic> json) {
+  factory HistoryFoto.fromJson(Map<String, dynamic> json, String mediaBaseUrl) {
     return HistoryFoto(
       id: json['id'],
-      foto: json['foto'],
+      foto: _buildFullPhotoUrl(json['foto'], mediaBaseUrl),
     );
+  }
+
+  static String _buildFullPhotoUrl(String photoPath, String mediaBaseUrl) {
+    // If it's already a full URL, return as is
+    if (photoPath.startsWith('http')) {
+      return photoPath;
+    }
+    
+    // Remove leading slash if present and build full URL
+    String cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
+    return '$mediaBaseUrl/$cleanPath';
   }
 
   Map<String, dynamic> toJson() {

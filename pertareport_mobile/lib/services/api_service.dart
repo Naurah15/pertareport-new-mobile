@@ -358,9 +358,13 @@ class ApiService {
 
         if (responseData is Map && responseData.containsKey('laporan_list')) {
           final List<dynamic> data = responseData['laporan_list'];
-          return data.map((item) => HistoryLaporan.fromJson(item)).toList();
+          return data
+              .map((item) => HistoryLaporan.fromJson(item, ApiConfig.mediaBaseUrl))
+              .toList();
         } else if (responseData is List) {
-          return responseData.map((item) => HistoryLaporan.fromJson(item)).toList();
+          return responseData
+              .map((item) => HistoryLaporan.fromJson(item, ApiConfig.mediaBaseUrl))
+              .toList();
         } else {
           throw Exception('Unexpected response format');
         }
@@ -372,6 +376,7 @@ class ApiService {
       throw Exception('Error loading history: $e');
     }
   }
+
 
 
   /// Download report file (Excel or PDF)
@@ -435,8 +440,9 @@ class ApiService {
         final List<dynamic> results = data['results'] ?? [];
         
         return results
-            .map((json) => HistoryLaporan.fromJson(json))
+            .map((json) => HistoryLaporan.fromJson(json, ApiConfig.mediaBaseUrl))
             .toList();
+
       } else {
         throw Exception('Failed to search history: ${response.statusCode}');
       }

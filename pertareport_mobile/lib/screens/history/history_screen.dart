@@ -482,6 +482,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  // Updated _buildKegiatanCard method for history_screen.dart
   Widget _buildKegiatanCard(HistoryKegiatan kegiatan) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -512,35 +513,71 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   scrollDirection: Axis.horizontal,
                   children: [
                     if (kegiatan.foto != null)
-                      Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image: DecorationImage(
-                            image: NetworkImage(kegiatan.foto!),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ...kegiatan.fotoList.map((foto) => Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: NetworkImage(foto.foto),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    )),
+                      _buildPhotoContainer(kegiatan.foto!),
+                    ...kegiatan.fotoList.map((foto) => _buildPhotoContainer(foto.foto)),
                   ],
                 ),
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  // Helper method to build photo container with error handling
+  Widget _buildPhotoContainer(String photoUrl) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          photoUrl,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              alignment: Alignment.center,
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+                valueColor: const AlwaysStoppedAnimation<Color>(pertaminaBlue),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading image: $photoUrl, Error: $error');
+            return Container(
+              alignment: Alignment.center,
+              color: Colors.grey[200],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.broken_image,
+                    color: Colors.grey[400],
+                    size: 30,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Gagal memuat',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 10,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
