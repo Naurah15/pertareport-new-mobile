@@ -1,6 +1,6 @@
 //import 'package:pertareport_mobile/models/report/laporan.dart';//
 import 'package:pertareport_mobile/screens/user_profile/profile_detail.dart';
-import 'package:pertareport_mobile/screens/history/unified_history_screen.dart';
+import 'package:pertareport_mobile/screens/history/history_screen.dart';
 //import 'package:pertareport_mobile/screens/report/laporan_list.dart';//
 import 'package:pertareport_mobile/screens/report/laporan_input_screen.dart';
 import 'package:pertareport_mobile/widgets/mainpage/meal_list_view.dart';
@@ -326,7 +326,7 @@ class _MyDiaryScreenState extends State<MyDiaryScreen>
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const UnifiedHistoryScreen()),
+                        MaterialPageRoute(builder: (context) => const HistoryScreen()),
                       );
                     },
                     child: Container(

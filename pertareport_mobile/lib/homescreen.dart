@@ -1,6 +1,6 @@
 import 'package:pertareport_mobile/models/mainpage/tabIcon_data.dart';
 import 'package:flutter/material.dart';
-import 'package:pertareport_mobile/screens/history/unified_history_screen.dart';
+import 'package:pertareport_mobile/screens/history/history_screen.dart';
 //import 'package:pertareport_mobile/screens/report/laporan_list.dart';//
 import 'package:pertareport_mobile/widgets/mainpage/bottom_bar_view.dart';
 import 'package:pertareport_mobile/utils/mainpage_theme.dart';
@@ -96,7 +96,7 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
                   return;
                 }
                 setState(() {
-                  tabBody = const UnifiedHistoryScreen();
+                  tabBody = const HistoryScreen();
                 });
               });
             } else if (index == 2) {
@@ -105,7 +105,7 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
                   return;
                 }
                 setState(() {
-                  tabBody = const UnifiedHistoryScreen();
+                  tabBody = const HistoryScreen();
                 });
               });
             } else if (index == 3) {
@@ -114,7 +114,7 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
                   return;
                 }
                 setState(() {
-                  tabBody = const UnifiedHistoryScreen();
+                  tabBody = const HistoryScreen();
                 });
               });
             }
