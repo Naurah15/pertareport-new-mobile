@@ -2,12 +2,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pertareport_mobile/models/report/spbu.dart';
 import 'package:pertareport_mobile/services/api_service.dart';
 import 'package:pertareport_mobile/models/report/jenis_kegiatan.dart';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart'; // untuk kIsWeb
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' as math;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ActivityEntry {
   JenisKegiatan? jenisKegiatan;
@@ -46,7 +48,8 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
   // Controllers for location and team
   final TextEditingController _lokasiController = TextEditingController();
   final TextEditingController _teamSupportController = TextEditingController();
-
+  List<SPBU> _spbuList = []; SPBU? _selectedSPBU; String _currentUsername = ""; 
+  
   // State variables
   List<JenisKegiatan> _jenisKegiatanList = [];
   List<ActivityEntry> _activityEntries = [ActivityEntry()]; // Start with one activity
@@ -55,6 +58,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
 
   bool _isLoading = false;
   bool _isLoadingJenisKegiatan = true;
+  bool _isLoadingSPBU = true; 
   bool _isLoadingLocation = false;
   String _locationStatus = "Tekan tombol untuk mendapatkan lokasi";
 
@@ -81,6 +85,8 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
     super.initState();
     _setupAnimations();
     _loadJenisKegiatan();
+    _loadCurrentUser();
+
   }
 
   void _setupAnimations() {
@@ -116,15 +122,35 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
   Future<void> _loadJenisKegiatan() async {
     try {
       final jenisKegiatanList = await ApiService.getJenisKegiatan();
+      final spbuList = await ApiService.getSPBUList(); 
       setState(() {
         _jenisKegiatanList = jenisKegiatanList;
+        _spbuList = spbuList;
         _isLoadingJenisKegiatan = false;
+        _isLoadingSPBU = false;
       });
     } catch (e) {
       setState(() {
         _isLoadingJenisKegiatan = false;
+        _isLoadingSPBU = false;
       });
       _showErrorDialog('Error loading jenis kegiatan: $e');
+    }
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final username = await ApiService.getCurrentUsername();
+      setState(() {
+        _currentUsername = username;
+        _teamSupportController.text = _currentUsername;
+      });
+    } catch (e) {
+      print('Error loading current user: $e');
+      setState(() {
+        _currentUsername = '';
+        _teamSupportController.text = '';
+      });
     }
   }
 
@@ -292,6 +318,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
         kegiatanOther: firstActivity.jenisKegiatan!.nama.toLowerCase() == 'other' 
             ? firstActivity.kegiatanOther 
             : null,
+        spbuId: _selectedSPBU?.id,
       );
 
       laporanId = createResponse.laporanId;
@@ -379,7 +406,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
 
   void _resetForm() {
     _lokasiController.clear();
-    _teamSupportController.clear();
+    _teamSupportController.text = _currentUsername;
     
     // Dispose existing controllers
     for (var controller in _remarkControllers) {
@@ -394,6 +421,7 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
       _remarkControllers = [TextEditingController()];
       _kegiatanOtherControllers = [TextEditingController()];
       _locationStatus = "Tekan tombol untuk mendapatkan lokasi";
+      _selectedSPBU = null;
     });
   }
 
@@ -792,6 +820,8 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                                     const SizedBox(height: 20),
 
                                     // Team Support Field
+                                    // Ganti bagian SPBU dropdown di _buildTextField section dengan ini:
+                                    // Team Support Field
                                     _buildTextField(
                                       controller: _teamSupportController,
                                       label: 'Nama Team Support',
@@ -799,6 +829,106 @@ class _LaporanInputScreenState extends State<LaporanInputScreen> with TickerProv
                                       color: pertaminaGreen,
                                       validator: (value) =>
                                           value == null || value.isEmpty ? "Nama team wajib diisi" : null,
+                                    ),
+                                    const SizedBox(height: 20),
+
+                                    // SPBU Dropdown - PERBAIKAN
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.04),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: DropdownButtonFormField<SPBU>(
+                                        value: _selectedSPBU,
+                                        isExpanded: true, // TAMBAHKAN INI - penting untuk handle text panjang
+                                        items: _spbuList.map((SPBU spbu) {
+                                          return DropdownMenuItem<SPBU>(
+                                            value: spbu,
+                                            child: Text(
+                                              spbu.toString(),
+                                              style: TextStyle(
+                                                color: textPrimary,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              overflow: TextOverflow.ellipsis, // TAMBAHKAN INI
+                                              maxLines: 1, // TAMBAHKAN INI
+                                            ),
+                                          );
+                                        }).toList(),
+                                        decoration: InputDecoration(
+                                          labelText: "SPBU",
+                                          labelStyle: TextStyle(
+                                            color: textSecondary,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          prefixIcon: Container(
+                                            margin: const EdgeInsets.all(10),
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: pertaminaOrange.withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Icon(
+                                              Icons.local_gas_station_rounded,
+                                              color: pertaminaOrange,
+                                              size: 18,
+                                            ),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            borderSide: BorderSide(
+                                              color: borderColor,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            borderSide: BorderSide(
+                                              color: pertaminaOrange,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          errorBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            borderSide: BorderSide(
+                                              color: pertaminaRed,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          focusedErrorBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                            borderSide: BorderSide(
+                                              color: pertaminaRed,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          filled: true,
+                                          fillColor: backgroundGray,
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16,
+                                          ),
+                                          errorStyle: TextStyle(
+                                            color: pertaminaRed,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedSPBU = value;
+                                          });
+                                        },
+                                        validator: (value) => value == null ? "SPBU wajib dipilih" : null,
+                                      ),
                                     ),
                                     const SizedBox(height: 30),
 

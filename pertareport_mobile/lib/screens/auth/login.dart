@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pertareport_mobile/homescreen.dart';
@@ -97,6 +98,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
       if (!mounted) return;
 
+      // Update method _handleLogin (bagian success)
       if (response.statusCode == 200) {
         final decodedResponse = jsonDecode(response.body);
         if (decodedResponse == null) {
@@ -109,6 +111,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         if (message == null || username == null) {
           throw Exception('Missing required response fields');
         }
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', username);
 
         Navigator.pushReplacement(
           context,

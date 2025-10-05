@@ -20,7 +20,7 @@ class MealsListData {
     MealsListData(
       imagePath: 'assets/images/truck.png',
       titleTxt: 'Daily Report',
-      kacl: 0, // Set ke 0 agar tidak tampil kalori
+      kacl: 0,
       meals: <String>[],
       startColor: '#0E4A6B', // Pertamina Blue
       endColor: '#1565C0',   // Light Blue
@@ -28,7 +28,7 @@ class MealsListData {
     MealsListData(
       imagePath: 'assets/images/pegawai_5.png',
       titleTxt: 'Report Review',
-      kacl: 0, // Set ke 0 agar tidak tampil kalori
+      kacl: 0, 
       meals: <String>[],
       startColor: '#1B5E20', // Pertamina Green
       endColor: '#2E7D32',   // Darker Green
@@ -36,7 +36,7 @@ class MealsListData {
     MealsListData(
       imagePath: 'assets/images/pegawai_3.png',
       titleTxt: 'Tracking work',
-      kacl: 0, // Set ke 0 agar tidak tampil kalori
+      kacl: 0, 
       meals: <String>[],
       startColor: '#0E4A6B', // Pertamina Blue
       endColor: '#0D47A1',   // Deep Blue
@@ -44,7 +44,7 @@ class MealsListData {
     MealsListData(
       imagePath: 'assets/images/pegawai_4.png',
       titleTxt: 'To do list',
-      kacl: 0, // Set ke 0 agar tidak tampil kalori
+      kacl: 0,
       meals: <String>[],
       startColor: '#1B5E20', // Pertamina Green
       endColor: '#1B5E20',   // Same green for solid look

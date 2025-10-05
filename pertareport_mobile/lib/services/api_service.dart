@@ -7,9 +7,11 @@ import 'package:pertareport_mobile/models/report/jenis_kegiatan.dart';
 import 'package:pertareport_mobile/models/report/laporan.dart';
 import 'package:pertareport_mobile/models/history/history_laporan.dart';
 import 'package:pertareport_mobile/models/history/history_summary.dart';
+import 'package:pertareport_mobile/models/report/spbu.dart';
 import 'package:pertareport_mobile/services/api_config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static final String reportUrl = ApiConfig.baseUrlReport;
@@ -34,6 +36,25 @@ class ApiService {
     }
   }
 
+  // Get all SPBU
+  static Future<List<SPBU>> getSPBUList() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${reportUrl}spbu/'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((item) => SPBU.fromJson(item)).toList();
+      } else {
+        throw Exception('Failed to load SPBU list: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching SPBU list: $e');
+    }
+  }
+
   // Create new laporan
   static Future<CreateLaporanResponse> createLaporan({
     required String lokasi,
@@ -41,6 +62,7 @@ class ApiService {
     required String remark,
     required int kegiatanId,
     String? kegiatanOther,
+    int? spbuId,
   }) async {
     try {
       final response = await http.post(
@@ -52,6 +74,7 @@ class ApiService {
           'remark': remark,
           'kegiatan_id': kegiatanId,
           if (kegiatanOther != null) 'kegiatan_other': kegiatanOther,
+          if (spbuId != null) 'spbu_id': spbuId, 
         }),
       );
 
@@ -472,15 +495,22 @@ class ApiService {
     }
   }
 
-  // Helper method to get auth token - implement based on your auth system
-  static Future<String> _getAuthToken() async {
-    // TODO: Implement your authentication token retrieval logic
-    // This could be from SharedPreferences, Secure Storage, etc.
-    // Example:
-    // final prefs = await SharedPreferences.getInstance();
-    // return prefs.getString('auth_token') ?? '';
-    return 'your-auth-token-here';
+  static Future<String> getCurrentUsername() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('username') ?? '';
+    } catch (e) {
+      throw Exception('Error getting username: $e');
+    }
   }
+
+
+  static Future<String> _getAuthToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token') ?? '';
+  }
+
+
 }
 
 // Response model classes
