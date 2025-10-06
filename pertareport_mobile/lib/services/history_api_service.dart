@@ -1,45 +1,72 @@
-// lib/services/history_api_service.dart
+// services/history_api_service.dart
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:pertareport_mobile/models/history/history_laporan.dart';
 import 'package:pertareport_mobile/models/history/history_filter.dart';
 import 'package:pertareport_mobile/services/api_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 
 class HistoryApiService {
   static final String baseUrl = ApiConfig.baseUrlHistory;
-  
-  // Add your media base URL here - replace with your actual media server URL
-  static final String mediaBaseUrl = ApiConfig.mediaBaseUrl; // e.g., "https://your-api-server.com"
+  static final String mediaBaseUrl = ApiConfig.mediaBaseUrl;
 
-  /// Get history list with optional filters
-  static Future<List<HistoryLaporan>> getHistoryList({
-    HistoryFilter? filter,
-  }) async {
+  /// Get current username and check if admin
+  static Future<Map<String, dynamic>> _getUserInfo() async {
     try {
-      String endpoint = baseUrl;
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString('username') ?? '';
+      final password = prefs.getString('password') ?? '';
       
-      // Add query parameters if filter exists
-      if (filter != null && filter.hasDateFilter) {
-        final queryParams = filter.toQueryParams();
-        if (queryParams.isNotEmpty) {
-          final queryString = queryParams.entries
-              .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-              .join('&');
-          endpoint += '?$queryString';
-        }
+      // Check if user is admin
+      final isAdmin = (username == 'admin' && password == 'Mimin1234%');
+      
+      return {
+        'username': username,
+        'isAdmin': isAdmin,
+      };
+    } catch (e) {
+      print('Error getting user info: $e');
+      return {
+        'username': '',
+        'isAdmin': false,
+      };
+    }
+  }
+
+  /// Get history list with user filtering
+  static Future<List<HistoryLaporan>> getHistoryList({HistoryFilter? filter}) async {
+    try {
+      // Get user info
+      final userInfo = await _getUserInfo();
+      final username = userInfo['username'] as String;
+      final isAdmin = userInfo['isAdmin'] as bool;
+
+      // Build query parameters
+      Map<String, String> queryParams = {};
+      
+      if (filter != null) {
+        queryParams.addAll(filter.toQueryParams());
       }
 
-      print('Fetching history from: $endpoint');
+      // Add username filter for non-admin users
+      if (!isAdmin && username.isNotEmpty) {
+        queryParams['nama_team_support'] = username;
+      }
 
+      final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
+      
+      print('Fetching history with params: $queryParams');
+      print('Is Admin: $isAdmin');
+      print('Username: $username');
+      
       final response = await http.get(
-        Uri.parse(endpoint),
+        uri,
         headers: {'Content-Type': 'application/json'},
       );
 
       print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
@@ -53,20 +80,19 @@ class HistoryApiService {
           throw Exception('Unexpected response format');
         }
 
+        // Additional client-side filtering for non-admin users as safety measure
         List<HistoryLaporan> laporanList = data
             .map((item) => HistoryLaporan.fromJson(item, mediaBaseUrl))
             .toList();
 
-        // Apply search filter if exists
-        if (filter?.searchQuery != null && filter!.searchQuery!.isNotEmpty) {
-          final query = filter.searchQuery!.toLowerCase();
+        // If not admin, double-check filtering on client side
+        if (!isAdmin && username.isNotEmpty) {
           laporanList = laporanList.where((laporan) {
-            return laporan.noDocument.toLowerCase().contains(query) ||
-                   laporan.lokasi.toLowerCase().contains(query) ||
-                   laporan.namaTeamSupport.toLowerCase().contains(query);
+            return laporan.namaTeamSupport.toLowerCase() == username.toLowerCase();
           }).toList();
         }
 
+        print('Total laporan fetched: ${laporanList.length}');
         return laporanList;
       } else {
         throw Exception('Failed to load history: ${response.statusCode}');
@@ -77,31 +103,18 @@ class HistoryApiService {
     }
   }
 
-  /// Convert relative photo path to full URL
-  static String? getFullPhotoUrl(String? photoPath) {
-    if (photoPath == null || photoPath.isEmpty) return null;
-    
-    // If it's already a full URL, return as is
-    if (photoPath.startsWith('http')) {
-      return photoPath;
-    }
-    
-    // Remove leading slash if present
-    String cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
-    
-    return '$mediaBaseUrl/$cleanPath';
+  /// Download laporan file (Excel or PDF) for web
+  static String getDownloadUrl(int laporanId, String type) {
+    final endpoint = type == 'excel' ? 'download-excel' : 'download-pdf';
+    return '$baseUrl$endpoint/$laporanId/';
   }
 
-  /// Download individual laporan file (Excel or PDF)
+  /// Download laporan file (Excel or PDF) for mobile
   static Future<Uint8List> downloadLaporanFile(int laporanId, String type) async {
     try {
-      final endpoint = type.toLowerCase() == 'excel' 
-          ? '${baseUrl}download/excel/$laporanId/'
-          : '${baseUrl}download/pdf/$laporanId/';
+      final url = getDownloadUrl(laporanId, type);
       
-      print('Downloading from: $endpoint');
-
-      final response = await http.get(Uri.parse(endpoint));
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         return response.bodyBytes;
@@ -109,73 +122,90 @@ class HistoryApiService {
         throw Exception('Failed to download file: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error downloading file: $e');
       throw Exception('Error downloading file: $e');
     }
   }
 
-  /// Download bulk files (Excel or PDF)
-  static Future<Uint8List> downloadBulkFile(String type, {HistoryFilter? filter}) async {
+  /// Get Google Maps URL from coordinates
+  static String getGoogleMapsUrl(String lokasi) {
+    // Remove spaces and parse coordinates
+    final coords = lokasi.replaceAll(' ', '').split(',');
+    if (coords.length == 2) {
+      final lat = coords[0].trim();
+      final lng = coords[1].trim();
+      return 'https://www.google.com/maps?q=$lat,$lng';
+    }
+    // If format is not lat,lng, try to search the location
+    return 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(lokasi)}';
+  }
+
+  /// Bulk download with filtering based on user role
+  static Future<Uint8List> bulkDownload({
+    required String type,
+    HistoryFilter? filter,
+  }) async {
     try {
-      String endpoint = type.toLowerCase() == 'excel' 
-          ? '${baseUrl}bulk/excel/'
-          : '${baseUrl}bulk/pdf/';
+      // Get user info
+      final userInfo = await _getUserInfo();
+      final username = userInfo['username'] as String;
+      final isAdmin = userInfo['isAdmin'] as bool;
+
+      // Build query parameters
+      Map<String, String> queryParams = {'type': type};
       
-      // Add query parameters if filter exists
-      if (filter != null && filter.hasDateFilter) {
-        final queryParams = filter.toQueryParams();
-        if (queryParams.isNotEmpty) {
-          final queryString = queryParams.entries
-              .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-              .join('&');
-          endpoint += '?$queryString';
-        }
+      if (filter != null) {
+        queryParams.addAll(filter.toQueryParams());
       }
 
-      print('Downloading bulk from: $endpoint');
+      // Add username filter for non-admin users
+      if (!isAdmin && username.isNotEmpty) {
+        queryParams['nama_team_support'] = username;
+      }
 
-      final response = await http.get(Uri.parse(endpoint));
+      final uri = Uri.parse('${baseUrl}bulk-download/').replace(queryParameters: queryParams);
+      
+      print('Bulk download with params: $queryParams');
+      
+      final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         return response.bodyBytes;
       } else {
-        throw Exception('Failed to download bulk file: ${response.statusCode}');
+        throw Exception('Failed to download: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error downloading bulk file: $e');
-      throw Exception('Error downloading bulk file: $e');
+      throw Exception('Error during bulk download: $e');
     }
   }
 
-  /// Get download URL for web (direct link)
-  static String getDownloadUrl(int laporanId, String type) {
-    return type.toLowerCase() == 'excel' 
-        ? '${baseUrl}download/excel/$laporanId/'
-        : '${baseUrl}download/pdf/$laporanId/';
-  }
+  /// Get bulk download URL for web (synchronous version for immediate use)
+  static Future<String> getBulkDownloadUrl({
+    required String type,
+    HistoryFilter? filter,
+  }) async {
+    // Get user info
+    final userInfo = await _getUserInfo();
+    final username = userInfo['username'] as String;
+    final isAdmin = userInfo['isAdmin'] as bool;
 
-  /// Get bulk download URL for web (direct link)
-  static String getBulkDownloadUrl(String type, {HistoryFilter? filter}) {
-    String url = type.toLowerCase() == 'excel' 
-        ? '${baseUrl}bulk/excel/'
-        : '${baseUrl}bulk/pdf/';
+    // Build query parameters
+    Map<String, String> queryParams = {'type': type};
     
-    // Add query parameters if filter exists
-    if (filter != null && filter.hasDateFilter) {
-      final queryParams = filter.toQueryParams();
-      if (queryParams.isNotEmpty) {
-        final queryString = queryParams.entries
-            .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-            .join('&');
-        url += '?$queryString';
-      }
+    if (filter != null) {
+      queryParams.addAll(filter.toQueryParams());
     }
-    
-    return url;
+
+    // Add username filter for non-admin users
+    if (!isAdmin && username.isNotEmpty) {
+      queryParams['nama_team_support'] = username;
+    }
+
+    final uri = Uri.parse('${baseUrl}bulk-download/').replace(queryParameters: queryParams);
+    return uri.toString();
   }
 
-  /// Get Google Maps URL for location
-  static String getGoogleMapsUrl(String location) {
-    return 'https://www.google.com/maps?q=${Uri.encodeComponent(location)}';
+  /// Download bulk file for mobile
+  static Future<Uint8List> downloadBulkFile(String type, {HistoryFilter? filter}) async {
+    return await bulkDownload(type: type, filter: filter);
   }
 }

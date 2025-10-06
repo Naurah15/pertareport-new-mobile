@@ -1,4 +1,4 @@
-// lib/screens/history/widgets/bulk_download_widget.dart
+// lib/widgets/history/bulk_download_widget.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pertareport_mobile/models/history/history_filter.dart';
@@ -139,7 +139,7 @@ class BulkDownloadWidget extends StatelessWidget {
         SnackBar(
           content: Row(
             children: [
-              SizedBox(
+              const SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
@@ -162,23 +162,73 @@ class BulkDownloadWidget extends StatelessWidget {
 
       if (kIsWeb) {
         // For web, open download URL directly
-        final url = HistoryApiService.getBulkDownloadUrl(type, filter: filter);
-        await launchUrl(Uri.parse(url));
+        final url = await HistoryApiService.getBulkDownloadUrl(
+          type: type,
+          filter: filter,
+        );
+        await launchUrl(Uri.parse(url), mode: LaunchMode.platformDefault);
+        
+        // Show success message for web
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text('Download ${type.toUpperCase()} dimulai'),
+                ],
+              ),
+              backgroundColor: pertaminaGreen,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
       } else {
         // For mobile, download file bytes
-        final bytes = await HistoryApiService.downloadBulkFile(type, filter: filter);
+        final bytes = await HistoryApiService.downloadBulkFile(
+          type,
+          filter: filter,
+        );
+        
         // Handle file saving - you might want to use file_picker or path_provider packages
         // For now, just show success message
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text('File ${type.toUpperCase()} berhasil didownload (${bytes.length} bytes)'),
+                ],
+              ),
+              backgroundColor: pertaminaGreen,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
+                const Icon(Icons.error, color: Colors.white),
                 const SizedBox(width: 12),
-                Text('File ${type.toUpperCase()} berhasil didownload'),
+                Expanded(
+                  child: Text('Error download ${type.toUpperCase()}: $e'),
+                ),
               ],
             ),
-            backgroundColor: pertaminaGreen,
+            backgroundColor: pertaminaRed,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -186,25 +236,6 @@ class BulkDownloadWidget extends StatelessWidget {
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text('Error download ${type.toUpperCase()}: $e'),
-              ),
-            ],
-          ),
-          backgroundColor: pertaminaRed,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-      );
     }
   }
 }
