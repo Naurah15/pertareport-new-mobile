@@ -9,7 +9,6 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart'; // untuk kIsWeb
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' as math;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ActivityEntry {
   JenisKegiatan? jenisKegiatan;

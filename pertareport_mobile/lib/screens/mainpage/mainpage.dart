@@ -1,5 +1,5 @@
+import 'package:pertareport_mobile/screens/auth/profile_screen.dart';
 //import 'package:pertareport_mobile/models/report/laporan.dart';//
-import 'package:pertareport_mobile/screens/user_profile/profile_detail.dart';
 import 'package:pertareport_mobile/screens/history/history_screen.dart';
 //import 'package:pertareport_mobile/screens/report/laporan_list.dart';//
 import 'package:pertareport_mobile/screens/report/laporan_input_screen.dart';

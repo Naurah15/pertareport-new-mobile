@@ -98,7 +98,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
       if (!mounted) return;
 
-      // Update method _handleLogin (bagian success)
       if (response.statusCode == 200) {
         final decodedResponse = jsonDecode(response.body);
         if (decodedResponse == null) {
@@ -112,9 +111,28 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           throw Exception('Missing required response fields');
         }
 
+        // PENTING: Simpan cookies untuk autentikasi
+        final cookies = response.headers['set-cookie'];
+        print('Cookies received: $cookies'); // Debug
+        
+        // Simpan data ke SharedPreferences
         final prefs = await SharedPreferences.getInstance();
+        
+        // Simpan cookies (CRITICAL untuk autentikasi)
+        if (cookies != null && cookies.isNotEmpty) {
+          await prefs.setString('cookies', cookies);
+          print('Cookies saved: $cookies'); // Debug
+        }
+        
+        // Simpan data user
         await prefs.setString('username', username);
+        await prefs.setString('phone_number', decodedResponse['phone_number'] ?? '');
+        await prefs.setString('role', decodedResponse['role'] ?? '');
+        await prefs.setString('email', decodedResponse['email'] ?? '');
+        await prefs.setString('date_joined', decodedResponse['date_joined'] ?? '');
+        await prefs.setString('last_login', decodedResponse['last_login'] ?? '');
 
+        // Pindah ke halaman utama setelah login berhasil
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => FitnessAppHomeScreen()),
@@ -141,6 +159,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         _showErrorSnackBar(context, errorMessage);
       }
     } catch (e) {
+      print('Login error: $e'); // Debug
       if (mounted) {
         _showErrorSnackBar(
             context, 'Connection error. Please check your network and try again.');

@@ -25,7 +25,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // Pertamina Corporate Colors (matching MyDiaryScreen)
   static const Color pertaminaBlue = Color(0xFF0E4A6B);
-  static const Color pertaminaGreen = Color(0xFF1B5E20);
   static const Color pertaminaRed = Color(0xFFD32F2F);
   static const Color lightBlue = Color(0xFF1565C0);
   static const Color backgroundGray = Color(0xFFF5F7FA);
