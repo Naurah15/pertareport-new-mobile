@@ -33,40 +33,14 @@ class HistoryItemWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with document number and download buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      laporan.noDocument,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: pertaminaBlue,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildDownloadButton(
-                        context,
-                        'Excel',
-                        Icons.table_chart,
-                        Colors.green,
-                        () => _downloadFile(context, laporan.id, 'excel'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildDownloadButton(
-                        context,
-                        'PDF',
-                        Icons.picture_as_pdf,
-                        pertaminaRed,
-                        () => _downloadFile(context, laporan.id, 'pdf'),
-                      ),
-                    ],
-                  ),
-                ],
+              // Header with document number
+              Text(
+                laporan.noDocument,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: pertaminaBlue,
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -236,57 +210,6 @@ class HistoryItemWidget extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Widget _buildDownloadButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
-    return SizedBox(
-      height: 32,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 14),
-        label: Text(
-          label,
-          style: const TextStyle(fontSize: 12),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
-          minimumSize: const Size(0, 32),
-        ),
-      ),
-    );
-  }
-
-  void _downloadFile(BuildContext context, int laporanId, String type) async {
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Downloading $type file...'),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-
-      // For web, open download URL directly
-      final url = HistoryApiService.getDownloadUrl(laporanId, type);
-      await launchUrl(Uri.parse(url));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error downloading file: $e'),
-          backgroundColor: pertaminaRed,
-        ),
-      );
-    }
   }
 
   String _formatDateTime(DateTime dateTime) {

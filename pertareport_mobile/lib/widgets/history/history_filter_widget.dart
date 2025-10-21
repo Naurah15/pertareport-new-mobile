@@ -75,8 +75,8 @@ class _HistoryFilterWidgetState extends State<HistoryFilterWidget>
         ],
         border: Border.all(color: borderColor),
       ),
-      margin: const EdgeInsets.all(16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Collapsible Header
           Material(
@@ -175,22 +175,33 @@ class _HistoryFilterWidgetState extends State<HistoryFilterWidget>
           ),
 
           // Expandable content
-          SizeTransition(
-            sizeFactor: _expandAnimation,
-            child: Container(
-              decoration: BoxDecoration(
-                color: softBlue.withOpacity(0.3),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-              ),
-              child: Column(
-                children: [
-                  const Divider(height: 1, color: borderColor),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _buildFilterContent(),
-                  ),
-                ],
-              ),
+          ClipRect(
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Container(
+                      decoration: BoxDecoration(
+                        color: softBlue.withOpacity(0.3),
+                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                      ),
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.4,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Divider(height: 1, color: borderColor),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: _buildFilterContent(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
         ],
@@ -200,6 +211,7 @@ class _HistoryFilterWidgetState extends State<HistoryFilterWidget>
 
   Widget _buildFilterContent() {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Date Range Section
@@ -303,6 +315,7 @@ class _HistoryFilterWidgetState extends State<HistoryFilterWidget>
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,

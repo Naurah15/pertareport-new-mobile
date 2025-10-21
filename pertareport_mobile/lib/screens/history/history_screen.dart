@@ -6,7 +6,6 @@ import 'package:pertareport_mobile/models/history/history_filter.dart';
 import 'package:pertareport_mobile/services/history_api_service.dart';
 import 'package:pertareport_mobile/widgets/history/history_filter_widget.dart';
 import 'package:pertareport_mobile/widgets/history/history_item_widget.dart';
-import 'package:pertareport_mobile/widgets/history/bulk_download_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -237,50 +236,54 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
 
               // Search and Filter Section
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: pertaminaBlue.withOpacity(0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Search Bar
-                    Container(
-                      decoration: BoxDecoration(
-                        color: softBlue,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: lightBlue.withOpacity(0.2)),
+              Flexible(
+                flex: 0,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: pertaminaBlue.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: 'Cari laporan...',
-                          hintStyle: TextStyle(color: textSecondary.withOpacity(0.6)),
-                          prefixIcon: Icon(Icons.search_rounded, color: lightBlue, size: 20),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Search Bar
+                      Container(
+                        decoration: BoxDecoration(
+                          color: softBlue,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: lightBlue.withOpacity(0.2)),
                         ),
-                        style: TextStyle(color: textPrimary),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Cari laporan...',
+                            hintStyle: TextStyle(color: textSecondary.withOpacity(0.6)),
+                            prefixIcon: Icon(Icons.search_rounded, color: lightBlue, size: 20),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                          style: TextStyle(color: textPrimary),
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Date Filter
-                    HistoryFilterWidget(
-                      filter: _filter,
-                      onFilterChanged: _onFilterChanged,
-                    ),
-                  ],
+                      // Date Filter
+                      HistoryFilterWidget(
+                        filter: _filter,
+                        onFilterChanged: _onFilterChanged,
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -288,31 +291,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
               // Content Section
               if (_isLoading)
-                Expanded(
+                const Expanded(
                   child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(pertaminaBlue),
-                            strokeWidth: 3,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Memuat data...',
-                            style: TextStyle(
-                              color: textSecondary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(pertaminaBlue),
+                      strokeWidth: 3,
                     ),
                   ),
                 )
@@ -383,68 +366,70 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 )
               else if (_filteredLaporanList.isEmpty)
                 Expanded(
-                  child: Center(
-                    child: Container(
-                      margin: const EdgeInsets.all(20),
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: textSecondary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
+                  child: SingleChildScrollView(
+                    child: Center(
+                      child: Container(
+                        margin: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: textSecondary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(
+                                Icons.inbox_rounded,
+                                size: 40,
+                                color: textSecondary.withOpacity(0.7),
+                              ),
                             ),
-                            child: Icon(
-                              Icons.inbox_rounded,
-                              size: 40,
-                              color: textSecondary.withOpacity(0.7),
+                            const SizedBox(height: 16),
+                            Text(
+                              _filter.hasFilters ? 'Tidak Ada Hasil' : 'Belum Ada Laporan',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            _filter.hasFilters ? 'Tidak Ada Hasil' : 'Belum Ada Laporan',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
+                            const SizedBox(height: 8),
+                            Text(
+                              _filter.hasFilters
+                                  ? 'Tidak ada laporan yang sesuai dengan filter'
+                                  : 'Belum ada laporan yang tersedia',
+                              style: TextStyle(color: textSecondary),
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _filter.hasFilters
-                                ? 'Tidak ada laporan yang sesuai dengan filter'
-                                : 'Belum ada laporan yang tersedia',
-                            style: TextStyle(color: textSecondary),
-                            textAlign: TextAlign.center,
-                          ),
-                          if (_filter.hasFilters) ...[
-                            const SizedBox(height: 20),
-                            GestureDetector(
-                              onTap: _clearFilters,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: lightBlue.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: lightBlue.withOpacity(0.3)),
-                                ),
-                                child: Text(
-                                  'Hapus Filter',
-                                  style: TextStyle(
-                                    color: lightBlue,
-                                    fontWeight: FontWeight.w600,
+                            if (_filter.hasFilters) ...[
+                              const SizedBox(height: 20),
+                              GestureDetector(
+                                onTap: _clearFilters,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: lightBlue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: lightBlue.withOpacity(0.3)),
+                                  ),
+                                  child: Text(
+                                    'Hapus Filter',
+                                    style: TextStyle(
+                                      color: lightBlue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -453,10 +438,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Expanded(
                   child: Column(
                     children: [
-                      // Results Summary & Bulk Download
+                      // Results Summary
                       Container(
                         margin: const EdgeInsets.symmetric(horizontal: 20),
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.95),
                           borderRadius: BorderRadius.circular(16),
@@ -468,42 +453,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ),
                           ],
                         ),
-                        child: Column(
+                        child: Row(
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: lightBlue.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    Icons.list_alt_rounded,
-                                    color: lightBlue,
-                                    size: 18,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    '${_filteredLaporanList.length} laporan ditemukan' +
-                                    (_filter.dateRangeText.isNotEmpty 
-                                        ? ' ${_filter.dateRangeText.toLowerCase()}'
-                                        : ''),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: textPrimary,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: lightBlue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.list_alt_rounded,
+                                color: lightBlue,
+                                size: 18,
+                              ),
                             ),
-                            
-                            BulkDownloadWidget(
-                              filter: _filter,
-                              hasData: _filteredLaporanList.isNotEmpty,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                '${_filteredLaporanList.length} laporan ditemukan' +
+                                (_filter.dateRangeText.isNotEmpty 
+                                    ? ' ${_filter.dateRangeText.toLowerCase()}'
+                                    : ''),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -615,55 +591,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         _buildDetailRow('Tanggal Proses', _formatDateTime(laporan.tanggalProses)),
 
                         const SizedBox(height: 24),
-
-                        // Download Actions
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _downloadFile(laporan.id, 'excel'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: pertaminaGreen,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.table_chart_rounded, color: Colors.white, size: 18),
-                                      const SizedBox(width: 8),
-                                      const Text('Excel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _downloadFile(laporan.id, 'pdf'),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: pertaminaRed,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 18),
-                                      const SizedBox(width: 8),
-                                      const Text('PDF', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 32),
 
                         // Kegiatan List
                         Text(
@@ -861,46 +788,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _downloadFile(int laporanId, String type) async {
-    try {
-      if (kIsWeb) {
-        final url = HistoryApiService.getDownloadUrl(laporanId, type);
-        await launchUrl(Uri.parse(url));
-      } else {
-        final bytes = await HistoryApiService.downloadLaporanFile(laporanId, type);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white),
-                const SizedBox(width: 12),
-                Text('File berhasil didownload'),
-              ],
-            ),
-            backgroundColor: pertaminaGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error_rounded, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text('Error: $e')),
-            ],
-          ),
-          backgroundColor: pertaminaRed,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    }
   }
 
   String _formatDateTime(DateTime dateTime) {
