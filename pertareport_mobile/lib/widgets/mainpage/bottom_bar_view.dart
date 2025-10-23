@@ -1,16 +1,14 @@
 import 'dart:math' as math;
 import 'package:pertareport_mobile/utils/mainpage_theme.dart';
-import 'package:pertareport_mobile/models/mainpage/tabIcon_data.dart';
 import 'package:flutter/material.dart';
 
 class BottomBarView extends StatefulWidget {
-  const BottomBarView(
-      {Key? key, this.tabIconsList, this.changeIndex, this.addClick})
+  const BottomBarView({Key? key, this.changeIndex, this.addClick})
       : super(key: key);
 
   final Function(int index)? changeIndex;
   final Function()? addClick;
-  final List<TabIconData>? tabIconsList;
+
   @override
   _BottomBarViewState createState() => _BottomBarViewState();
 }
@@ -18,6 +16,13 @@ class BottomBarView extends StatefulWidget {
 class _BottomBarViewState extends State<BottomBarView>
     with TickerProviderStateMixin {
   AnimationController? animationController;
+  int selectedIndex = 0;
+
+  // Pertamina Corporate Colors
+  static const Color pertaminaBlue = Color(0xFF0E4A6B);
+  static const Color pertaminaRed = Color(0xFFD32F2F);
+  static const Color lightBlue = Color(0xFF1565C0);
+  static const Color softBlue = Color(0xFFE8EDF5);
 
   @override
   void initState() {
@@ -27,6 +32,12 @@ class _BottomBarViewState extends State<BottomBarView>
     );
     animationController?.forward();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    animationController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,8 +51,8 @@ class _BottomBarViewState extends State<BottomBarView>
             return Transform(
               transform: Matrix4.translationValues(0.0, 0.0, 0.0),
               child: PhysicalShape(
-                color: FitnessAppTheme.white,
-                elevation: 16.0,
+                color: Colors.white,
+                elevation: 20.0,
                 clipper: TabClipper(
                     radius: Tween<double>(begin: 0.0, end: 1.0)
                             .animate(CurvedAnimation(
@@ -49,58 +60,79 @@ class _BottomBarViewState extends State<BottomBarView>
                                 curve: Curves.fastOutSlowIn))
                             .value *
                         38.0),
-                child: Column(
-                  children: <Widget>[
-                    SizedBox(
-                      height: 62,
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.only(left: 8, right: 8, top: 4),
-                        child: Row(
-                          children: <Widget>[
-                            // Tab kiri (index 0)
-                            Expanded(
-                              child: TabIcons(
-                                  tabIconData: widget.tabIconsList?[0],
-                                  removeAllSelect: () {
-                                    setRemoveAllSelection(
-                                        widget.tabIconsList?[0]);
-                                    widget.changeIndex!(1);
-                                  }),
-                            ),
-                            // Space untuk FAB chat di tengah
-                            SizedBox(
-                              width: Tween<double>(begin: 0.0, end: 1.0)
-                                      .animate(CurvedAnimation(
-                                          parent: animationController!,
-                                          curve: Curves.fastOutSlowIn))
-                                      .value *
-                                  64.0,
-                            ),
-                            // Tab kanan (index 2)
-                            Expanded(
-                              child: TabIcons(
-                                  tabIconData: widget.tabIconsList?[1],
-                                  removeAllSelect: () {
-                                    setRemoveAllSelection(
-                                        widget.tabIconsList?[1]);
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white,
+                        softBlue.withOpacity(0.3),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      SizedBox(
+                        height: 62,
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.only(left: 8, right: 8, top: 4),
+                          child: Row(
+                            children: <Widget>[
+                              // Tab kiri - Home (index 0)
+                              Expanded(
+                                child: TabIconWidget(
+                                  icon: Icons.home_rounded,
+                                  label: 'Home',
+                                  isSelected: selectedIndex == 0,
+                                  onTap: () {
+                                    setState(() {
+                                      selectedIndex = 0;
+                                    });
+                                    widget.changeIndex!(0);
+                                  },
+                                ),
+                              ),
+                              // Space untuk FAB Report di tengah
+                              SizedBox(
+                                width: Tween<double>(begin: 0.0, end: 1.0)
+                                        .animate(CurvedAnimation(
+                                            parent: animationController!,
+                                            curve: Curves.fastOutSlowIn))
+                                        .value *
+                                    64.0,
+                              ),
+                              // Tab kanan - History (index 2)
+                              Expanded(
+                                child: TabIconWidget(
+                                  icon: Icons.history_rounded,
+                                  label: 'History',
+                                  isSelected: selectedIndex == 2,
+                                  onTap: () {
+                                    setState(() {
+                                      selectedIndex = 2;
+                                    });
                                     widget.changeIndex!(2);
-                                  }),
-                            ),
-                          ],
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      height: MediaQuery.of(context).padding.bottom,
-                    )
-                  ],
+                      SizedBox(
+                        height: MediaQuery.of(context).padding.bottom,
+                      )
+                    ],
+                  ),
                 ),
               ),
             );
           },
         ),
-        // FAB Chat di tengah (index 1 = home)
+        // FAB Report di tengah (index 1)
         Padding(
           padding:
               EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
@@ -123,38 +155,57 @@ class _BottomBarViewState extends State<BottomBarView>
                             curve: Curves.fastOutSlowIn)),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: FitnessAppTheme.lightbrown,
                         gradient: LinearGradient(
-                            colors: [
-                              FitnessAppTheme.lightbrown,
-                              HexColor('#6A88E5'),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight),
+                          colors: [
+                            lightBlue,
+                            pertaminaBlue,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         shape: BoxShape.circle,
                         boxShadow: <BoxShadow>[
                           BoxShadow(
-                              color:
-                                  FitnessAppTheme.lightbrown.withOpacity(0.4),
-                              offset: const Offset(8.0, 16.0),
-                              blurRadius: 16.0),
+                            color: pertaminaBlue.withOpacity(0.4),
+                            offset: const Offset(0, 8.0),
+                            blurRadius: 20.0,
+                            spreadRadius: 2.0,
+                          ),
+                          BoxShadow(
+                            color: lightBlue.withOpacity(0.3),
+                            offset: const Offset(0, 4.0),
+                            blurRadius: 12.0,
+                          ),
                         ],
                       ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          splashColor: Colors.white.withOpacity(0.1),
+                          splashColor: Colors.white.withOpacity(0.2),
                           highlightColor: Colors.transparent,
                           focusColor: Colors.transparent,
+                          borderRadius: BorderRadius.circular(60),
                           onTap: () {
-                            // Langsung ke home (index 1)
-                            setRemoveAllSelection(null);
-                            widget.changeIndex!(0);
+                            setState(() {
+                              selectedIndex = 1;
+                            });
+                            widget.changeIndex!(1);
                           },
-                          child: Icon(
-                            Icons.chat_bubble,
-                            color: FitnessAppTheme.white,
-                            size: 32,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.description_rounded,
+                                color: Colors.white,
+                                size: 30,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -168,146 +219,171 @@ class _BottomBarViewState extends State<BottomBarView>
       ],
     );
   }
-
-  void setRemoveAllSelection(TabIconData? tabIconData) {
-    if (!mounted) return;
-    setState(() {
-      widget.tabIconsList?.forEach((TabIconData tab) {
-        tab.isSelected = false;
-        if (tabIconData != null && tabIconData.index == tab.index) {
-          tab.isSelected = true;
-        }
-      });
-    });
-  }
 }
 
-class TabIcons extends StatefulWidget {
-  const TabIcons({Key? key, this.tabIconData, this.removeAllSelect})
-      : super(key: key);
+class TabIconWidget extends StatefulWidget {
+  const TabIconWidget({
+    Key? key,
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  }) : super(key: key);
 
-  final TabIconData? tabIconData;
-  final Function()? removeAllSelect;
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
   @override
-  _TabIconsState createState() => _TabIconsState();
+  _TabIconWidgetState createState() => _TabIconWidgetState();
 }
 
-class _TabIconsState extends State<TabIcons> with TickerProviderStateMixin {
+class _TabIconWidgetState extends State<TabIconWidget>
+    with TickerProviderStateMixin {
+  AnimationController? animationController;
+
+  // Pertamina Corporate Colors
+  static const Color pertaminaBlue = Color(0xFF0E4A6B);
+  static const Color lightBlue = Color(0xFF1565C0);
+  static const Color softBlue = Color(0xFFE8EDF5);
+
   @override
   void initState() {
-    widget.tabIconData?.animationController = AnimationController(
+    super.initState();
+    animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
-    )..addStatusListener((AnimationStatus status) {
-        if (status == AnimationStatus.completed) {
-          if (!mounted) return;
-          widget.removeAllSelect!();
-          widget.tabIconData?.animationController?.reverse();
-        }
-      });
-    super.initState();
+    );
   }
 
-  void setAnimation() {
-    widget.tabIconData?.animationController?.forward();
+  @override
+  void dispose() {
+    animationController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(TabIconWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected && !oldWidget.isSelected) {
+      animationController?.forward(from: 0.0);
+    } else if (!widget.isSelected && oldWidget.isSelected) {
+      animationController?.reverse();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: Center(
-        child: InkWell(
-          splashColor: Colors.transparent,
-          focusColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          hoverColor: Colors.transparent,
-          onTap: () {
-            if (!widget.tabIconData!.isSelected) {
-              setAnimation();
-            }
-          },
-          child: IgnorePointer(
-            child: Stack(
-              alignment: AlignmentDirectional.center,
-              children: <Widget>[
-                ScaleTransition(
-                  alignment: Alignment.center,
-                  scale: Tween<double>(begin: 0.88, end: 1.0).animate(
-                      CurvedAnimation(
-                          parent: widget.tabIconData!.animationController!,
-                          curve:
-                              Interval(0.1, 1.0, curve: Curves.fastOutSlowIn))),
-                  child: Image.asset(widget.tabIconData!.isSelected
-                      ? widget.tabIconData!.selectedImagePath
-                      : widget.tabIconData!.imagePath),
-                ),
-                Positioned(
-                  top: 4,
-                  left: 6,
-                  right: 0,
-                  child: ScaleTransition(
+    return InkWell(
+      splashColor: softBlue.withOpacity(0.3),
+      highlightColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      onTap: widget.onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Flexible sizing based on available height
+            final availableHeight = constraints.maxHeight;
+            final iconSize = (availableHeight * 0.5).clamp(20.0, 26.0);
+            final fontSize = widget.isSelected ? 9.0 : 8.5;
+            
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon dengan animasi dan background
+                Flexible(
+                  child: Stack(
                     alignment: Alignment.center,
-                    scale: Tween<double>(begin: 0.0, end: 1.0).animate(
-                        CurvedAnimation(
-                            parent: widget.tabIconData!.animationController!,
-                            curve: Interval(0.2, 1.0,
-                                curve: Curves.fastOutSlowIn))),
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: FitnessAppTheme.lightbrown,
-                        shape: BoxShape.circle,
+                    children: [
+                      // Background circle saat selected
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: iconSize + 8,
+                        height: iconSize + 8,
+                        decoration: BoxDecoration(
+                          color: widget.isSelected 
+                              ? softBlue 
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
+                      // Icon
+                      AnimatedScale(
+                        scale: widget.isSelected ? 1.05 : 1.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutBack,
+                        child: Icon(
+                          widget.icon,
+                          size: iconSize,
+                          color: widget.isSelected
+                              ? pertaminaBlue
+                              : Colors.grey.shade400,
+                        ),
+                      ),
+                      // Decorative pulse effect
+                      if (widget.isSelected)
+                        ScaleTransition(
+                          scale: Tween<double>(begin: 1.0, end: 1.2).animate(
+                            CurvedAnimation(
+                              parent: animationController!,
+                              curve: Curves.easeOut,
+                            ),
+                          ),
+                          child: Container(
+                            width: iconSize + 8,
+                            height: iconSize + 8,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: lightBlue.withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                // Minimal spacing
+                SizedBox(height: 1),
+                // Label text - flexible
+                Flexible(
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 300),
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: widget.isSelected
+                          ? pertaminaBlue
+                          : Colors.grey.shade500,
+                      letterSpacing: 0.1,
+                      height: 1.0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.clip,
+                    child: Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
-                Positioned(
-                  top: 0,
-                  left: 6,
-                  bottom: 8,
-                  child: ScaleTransition(
-                    alignment: Alignment.center,
-                    scale: Tween<double>(begin: 0.0, end: 1.0).animate(
-                        CurvedAnimation(
-                            parent: widget.tabIconData!.animationController!,
-                            curve: Interval(0.5, 0.8,
-                                curve: Curves.fastOutSlowIn))),
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: FitnessAppTheme.lightbrown,
-                        shape: BoxShape.circle,
-                      ),
+                // Active indicator dot - very small
+                if (widget.isSelected)
+                  Container(
+                    margin: const EdgeInsets.only(top: 0.5),
+                    width: 2.5,
+                    height: 2.5,
+                    decoration: BoxDecoration(
+                      color: pertaminaBlue,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 6,
-                  right: 8,
-                  bottom: 0,
-                  child: ScaleTransition(
-                    alignment: Alignment.center,
-                    scale: Tween<double>(begin: 0.0, end: 1.0).animate(
-                        CurvedAnimation(
-                            parent: widget.tabIconData!.animationController!,
-                            curve: Interval(0.5, 0.6,
-                                curve: Curves.fastOutSlowIn))),
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: FitnessAppTheme.lightbrown,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ),
               ],
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
