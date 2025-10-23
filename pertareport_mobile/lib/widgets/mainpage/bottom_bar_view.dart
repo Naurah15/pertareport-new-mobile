@@ -81,21 +81,21 @@ class _BottomBarViewState extends State<BottomBarView>
                               const EdgeInsets.only(left: 8, right: 8, top: 4),
                           child: Row(
                             children: <Widget>[
-                              // Tab kiri - Home (index 0)
+                              // Tab kiri - Report (index 1)
                               Expanded(
                                 child: TabIconWidget(
-                                  icon: Icons.home_rounded,
-                                  label: 'Home',
-                                  isSelected: selectedIndex == 0,
+                                  icon: Icons.description_rounded,
+                                  label: 'Report',
+                                  isSelected: selectedIndex == 1,
                                   onTap: () {
                                     setState(() {
-                                      selectedIndex = 0;
+                                      selectedIndex = 1;
                                     });
-                                    widget.changeIndex!(0);
+                                    widget.changeIndex!(1);
                                   },
                                 ),
                               ),
-                              // Space untuk FAB Report di tengah
+                              // Space untuk FAB Home di tengah
                               SizedBox(
                                 width: Tween<double>(begin: 0.0, end: 1.0)
                                         .animate(CurvedAnimation(
@@ -132,7 +132,7 @@ class _BottomBarViewState extends State<BottomBarView>
             );
           },
         ),
-        // FAB Report di tengah (index 1)
+        // FAB Home di tengah (index 0)
         Padding(
           padding:
               EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
@@ -187,9 +187,9 @@ class _BottomBarViewState extends State<BottomBarView>
                           borderRadius: BorderRadius.circular(60),
                           onTap: () {
                             setState(() {
-                              selectedIndex = 1;
+                              selectedIndex = 0;
                             });
-                            widget.changeIndex!(1);
+                            widget.changeIndex!(0);
                           },
                           child: Container(
                             decoration: BoxDecoration(
@@ -201,7 +201,7 @@ class _BottomBarViewState extends State<BottomBarView>
                             ),
                             child: Center(
                               child: Icon(
-                                Icons.description_rounded,
+                                Icons.home_rounded,
                                 color: Colors.white,
                                 size: 30,
                               ),
@@ -278,31 +278,32 @@ class _TabIconWidgetState extends State<TabIconWidget>
     return InkWell(
       splashColor: softBlue.withOpacity(0.3),
       highlightColor: Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       onTap: widget.onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // Flexible sizing based on available height
-            final availableHeight = constraints.maxHeight;
-            final iconSize = (availableHeight * 0.5).clamp(20.0, 26.0);
-            final fontSize = widget.isSelected ? 9.0 : 8.5;
+            // Lebih flexible - gunakan constraint actual
+            final maxHeight = constraints.maxHeight;
+            final iconSize = (maxHeight * 0.45).clamp(18.0, 24.0);
+            final fontSize = widget.isSelected ? 8.5 : 8.0;
             
             return Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Icon dengan animasi dan background
-                Flexible(
+                // Icon - TIDAK pakai Flexible di Stack
+                SizedBox(
+                  height: iconSize + 10,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       // Background circle saat selected
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        width: iconSize + 8,
-                        height: iconSize + 8,
+                        width: iconSize + 10,
+                        height: iconSize + 10,
                         decoration: BoxDecoration(
                           color: widget.isSelected 
                               ? softBlue 
@@ -326,15 +327,15 @@ class _TabIconWidgetState extends State<TabIconWidget>
                       // Decorative pulse effect
                       if (widget.isSelected)
                         ScaleTransition(
-                          scale: Tween<double>(begin: 1.0, end: 1.2).animate(
+                          scale: Tween<double>(begin: 1.0, end: 1.15).animate(
                             CurvedAnimation(
                               parent: animationController!,
                               curve: Curves.easeOut,
                             ),
                           ),
                           child: Container(
-                            width: iconSize + 8,
-                            height: iconSize + 8,
+                            width: iconSize + 10,
+                            height: iconSize + 10,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
@@ -348,39 +349,47 @@ class _TabIconWidgetState extends State<TabIconWidget>
                   ),
                 ),
                 // Minimal spacing
-                SizedBox(height: 1),
-                // Label text - flexible
-                Flexible(
-                  child: AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 300),
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: widget.isSelected
-                          ? pertaminaBlue
-                          : Colors.grey.shade500,
-                      letterSpacing: 0.1,
-                      height: 1.0,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.clip,
-                    child: Text(
-                      widget.label,
-                      textAlign: TextAlign.center,
+                const SizedBox(height: 2),
+                // Label text - fixed height
+                SizedBox(
+                  height: 11,
+                  child: Center(
+                    child: AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 300),
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: widget.isSelected
+                            ? pertaminaBlue
+                            : Colors.grey.shade500,
+                        letterSpacing: 0.1,
+                        height: 1.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      child: Text(
+                        widget.label,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),
-                // Active indicator dot - very small
-                if (widget.isSelected)
-                  Container(
-                    margin: const EdgeInsets.only(top: 0.5),
-                    width: 2.5,
-                    height: 2.5,
-                    decoration: BoxDecoration(
-                      color: pertaminaBlue,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
+                // Active indicator dot - conditional
+                SizedBox(
+                  height: 4,
+                  child: widget.isSelected
+                      ? Center(
+                          child: Container(
+                            width: 3,
+                            height: 3,
+                            decoration: const BoxDecoration(
+                              color: pertaminaBlue,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
               ],
             );
           },

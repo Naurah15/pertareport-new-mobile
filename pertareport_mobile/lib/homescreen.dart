@@ -71,19 +71,21 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
         BottomBarView(
           addClick: () {},
           changeIndex: (int index) {
-            // index 0 = Report (FAB tengah)
-            // index 1 = Home (kiri)
-            // index 2 = History (kanan)
+            // MAPPING YANG BENAR:
+            // index 0 = Home (FAB tengah) 🏠
+            // index 1 = Report (tab kiri) 📄
+            // index 2 = History (tab kanan) 🕒
 
-            if (index == 1) {
+            if (index == 0) {
+              // Home (FAB tengah)
               animationController?.reverse().then<dynamic>((data) {
                 if (!mounted) return;
                 setState(() {
-                  tabBody =
-                      MyDiaryScreen(animationController: animationController);
+                  tabBody = MyDiaryScreen(animationController: animationController);
                 });
               });
-            } else if (index == 0) {
+            } else if (index == 1) {
+              // Report (tab kiri)
               animationController?.reverse().then<dynamic>((data) {
                 if (!mounted) return;
                 setState(() {
@@ -91,6 +93,7 @@ class _FitnessAppHomeScreenState extends State<FitnessAppHomeScreen>
                 });
               });
             } else if (index == 2) {
+              // History (tab kanan)
               animationController?.reverse().then<dynamic>((data) {
                 if (!mounted) return;
                 setState(() {
