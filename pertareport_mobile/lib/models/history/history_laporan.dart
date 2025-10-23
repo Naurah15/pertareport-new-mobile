@@ -1,3 +1,4 @@
+import 'package:pertareport_mobile/models/report/spbu.dart';
 // lib/models/history/history_laporan.dart
 class HistoryLaporan {
   final int id;
@@ -6,6 +7,7 @@ class HistoryLaporan {
   final String namaTeamSupport;
   final DateTime tanggalProses;
   final List<HistoryKegiatan> kegiatanList;
+  final SPBU? spbu;
 
   HistoryLaporan({
     required this.id,
@@ -14,6 +16,7 @@ class HistoryLaporan {
     required this.namaTeamSupport,
     required this.tanggalProses,
     required this.kegiatanList,
+    this.spbu,
   });
 
   factory HistoryLaporan.fromJson(Map<String, dynamic> json, String mediaBaseUrl) {
@@ -26,6 +29,7 @@ class HistoryLaporan {
       kegiatanList: (json['kegiatan_list'] as List<dynamic>?)
           ?.map((item) => HistoryKegiatan.fromJson(item, mediaBaseUrl))
           .toList() ?? [],
+      spbu: json['spbu'] != null ? SPBU.fromJson(json['spbu']) : null,
     );
   }
 
@@ -37,6 +41,7 @@ class HistoryLaporan {
       'nama_team_support': namaTeamSupport,
       'tanggal_proses': tanggalProses.toIso8601String(),
       'kegiatan_list': kegiatanList.map((k) => k.toJson()).toList(),
+      'spbu': spbu?.toJson(),
     };
   }
 }

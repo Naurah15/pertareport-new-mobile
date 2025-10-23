@@ -587,6 +587,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           launchUrl(Uri.parse(url));
                         }),
                         _buildDetailRow('Team Support', laporan.namaTeamSupport),
+                        
+                        if (laporan.spbu != null)
+                          _buildDetailRow('SPBU', '${laporan.spbu!.kode} - ${laporan.spbu!.nama}'),
+                          
                         _buildDetailRow('Tanggal Proses', _formatDateTime(laporan.tanggalProses)),
 
                         const SizedBox(height: 24),

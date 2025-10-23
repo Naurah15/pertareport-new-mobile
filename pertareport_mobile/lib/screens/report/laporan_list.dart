@@ -110,6 +110,7 @@ class _LaporanListScreenState extends State<LaporanListScreen> {
 
               // Basic info
               _buildInfoRow('Lokasi', laporan.lokasi),
+              _buildInfoRow('SPBU', laporan.spbu?.nama ?? '-'),
               _buildInfoRow('Team Support', laporan.namaTeamSupport),
               _buildInfoRow('Tanggal', _formatDate(laporan.tanggalProses.toIso8601String())),
               
@@ -338,6 +339,10 @@ class _LaporanListScreenState extends State<LaporanListScreen> {
                             children: [
                               Text(
                                 'Lokasi: ${laporan.lokasi}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                'SPBU: ${laporan.spbu?.nama ?? '-'}',
                                 style: const TextStyle(fontSize: 12),
                               ),
                               Text(
