@@ -43,7 +43,7 @@ class MealsListData {
     ),
     MealsListData(
       imagePath: 'assets/images/pegawai_4.png',
-      titleTxt: 'To do list',
+      titleTxt: 'Report Filtering & Sorting',
       kacl: 0,
       meals: <String>[],
       startColor: '#1B5E20', // Pertamina Green
