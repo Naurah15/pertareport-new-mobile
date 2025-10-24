@@ -1,22 +1,39 @@
-baku, jam operasional, dan pembayaran. Pemilik restoran dapat memberikan jawaban yang akurat dan cepat, memastikan layanan lebih personal dan 
+Deskripsi Singkat
 
-## Dataset
-Kami menggunakan dataset dari [Dataset Kuliner Yogyakarta](https://docs.google.com/spreadsheets/d/1LelYSWyIbtKYAdcubHRHUZLkp7jnfJAlvegf-s0BD8c/edit?gid=1296951064#gid=1296951064) untuk informasi terkait lokasi restoran dan jenis kuliner di Jogjakarta.
+Pertareport adalah sebuah website dan aplikasi yang dikembangkan untuk memudahkan karyawan SPBU dalam melakukan pelaporan kegiatan harian secara digital. Sistem ini bertujuan untuk meningkatkan efisiensi, akurasi, dan transparansi dalam pencatatan aktivitas operasional di lingkungan SPBU.
 
-## Jenis Pengguna (_Role_)
+Aplikasi ini terdiri dari beberapa fitur utama yang saling terintegrasi, dengan perbedaan fungsi dan hak akses antara karyawan SPBU dan admin.
 
-Pada aplikasi kami, terdapat dua jenis pengguna:
+1. Report
 
-- Pemilik Toko
-- Pengguna Umum
+Fitur utama yang digunakan oleh karyawan untuk melakukan pelaporan kegiatan rutin di SPBU.
+Pengguna mengisi data seperti nama SPBU, jenis kegiatan, detail kegiatan, dan foto kegiatan.
+Sementara itu, data seperti nomor dokumen, tanggal proses, lokasi SPBU, dan nama karyawan akan dihasilkan secara otomatis oleh sistem, untuk menjaga konsistensi dan mengurangi kesalahan input.
+Fitur ini memastikan setiap aktivitas di SPBU tercatat dengan format yang seragam dan mudah dipantau oleh pihak administrasi.
 
-Penjelasan lebih rinci tentang setiap jenis pengguna dan hak aksesnya dalam aplikasi disampaikan pada deskripsi masing-masing modul.
+2. History
 
-## Alur Pengintegrasian dengan Aplikasi Web
+Fitur ini berfungsi untuk menampilkan daftar laporan yang telah dibuat oleh karyawan.
+Pengguna dapat melakukan penyaringan (filter) berdasarkan tanggal atau nama, serta mengunduh laporan baik secara individu, berdasarkan periode tertentu, maupun keseluruhan laporan.
+Kemampuan unduh laporan hanya tersedia pada versi website, karena versi ini difokuskan untuk aktivitas administratif seperti pengarsipan dan evaluasi.
+Sedangkan pada aplikasi mobile, fitur ini dioptimalkan untuk tampilan ringan dan praktis, agar mudah digunakan dalam kegiatan harian di lapangan.
 
-Saat menghubungkan Django dengan Flutter, kami akan melakukan beberapa langkah berikut:
+3. Profile
 
-1. Menambahkan Library HTTP: Untuk memungkinkan aplikasi Flutter terhubung dan berkomunikasi dengan aplikasi web Django, kami akan menambahkan library http ke proyek.
-2. Menggunakan Sistem Autentikasi: Fitur login, logout, dan registrasi yang sudah dibuat sebelumnya akan diterapkan. Sistem ini memastikan setiap pengguna mendapatkan akses sesuai dengan perannya, apakah sebagai pembaca atau penulis.
-3. Mengelola Cookie dengan pbp_django_auth: Library ini akan membantu mengatur cookie autentikasi, sehingga setiap permintaan yang dikirim ke server berasal dari pengguna yang sudah terverifikasi dan punya izin yang benar.
-4. Membuat Kelas Katalog di Flutter: Kami akan membuat kelas Katalog menggunakan data produk makanan dari API. Untuk mempermudah, kami akan menggunakan alat https://app.quicktype.io/ untuk mengonversi data JSON menjadi objek Dart yang siap digunakan.
+Fitur ini menampilkan informasi akun pengguna seperti username, email, nomor telepon, tanggal bergabung, dan waktu login terakhir.
+Pengguna dapat memperbarui data pribadi seperti nomor telepon, sedangkan informasi lainnya dikelola secara otomatis oleh sistem.
+Fitur ini membantu memastikan data pengguna tetap terkini dan terorganisir.
+
+4. Manajemen Admin
+
+Admin memiliki peran yang lebih luas untuk memastikan kelancaran pengelolaan data dalam sistem Pertareport.
+Selain dapat melihat seluruh laporan dari semua karyawan, admin juga dapat:
+
+Mengelola Jenis Kegiatan: menambah, mengubah, atau menghapus daftar jenis kegiatan yang tersedia agar tetap sesuai dengan kebutuhan operasional SPBU.
+
+Mengelola Data SPBU: menambahkan SPBU baru, memperbarui informasi SPBU yang sudah ada, atau menonaktifkan SPBU yang tidak lagi beroperasi.
+
+Memantau Aktivitas Pengguna: melihat laporan dari seluruh user untuk keperluan pemantauan, analisis, dan pelaporan ke pihak manajemen.
+
+Dengan struktur sistem yang jelas dan modular, Pertareport memberikan solusi pelaporan yang efisien, mudah dikembangkan, dan terintegrasi dengan kebutuhan administrasi maupun operasional SPBU.
+Dokumentasi ini juga diharapkan dapat membantu developer lain memahami alur fungsi utama, hak akses pengguna, serta tujuan implementasi setiap fitur di dalam sistem.

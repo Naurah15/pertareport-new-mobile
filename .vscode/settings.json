@@ -1,0 +1,24 @@
+{
+  // Nonaktifkan seluruh fitur Java
+  "java.enabled": false,
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "java.import.generatesMetadataFilesAtProjectRoot": false,
+
+  // Sembunyikan file/folder metadata Java
+  "files.exclude": {
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  },
+
+  // Optimisasi Flutter & Dart
+  "dart.analysisExcludedFolders": [
+    "build"
+  ],
+  "dart.flutterSdkPath": "C:/Users/Lenovo/Downloads/flutter_windows_3.24.4-stable/flutter",
+
+  // Format otomatis untuk Dart
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "Dart-Code.dart-code"
+}
