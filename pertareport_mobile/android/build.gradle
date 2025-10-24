@@ -1,3 +1,28 @@
+buildscript {
+
+    ext {
+        flutter = [
+            compileSdkVersion: 35,    // SDK yang kamu punya
+            minSdkVersion: 21,        // min SDK
+            targetSdkVersion: 35,     // target SDK
+            ndkVersion: "25.2.9519653", // sesuai kebutuhan NDK
+            versionCode: 1,           // versionCode app
+            versionName: "1.0"        // versionName app
+        ]
+    }
+
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        // Gunakan versi yang sama dengan versi Gradle bawaan Flutter (biasanya 8.1.0)
+        classpath "com.android.tools.build:gradle:8.3.0"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0"
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -6,10 +31,9 @@ allprojects {
 }
 
 rootProject.buildDir = "../build"
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
     project.evaluationDependsOn(":app")
 }
 
